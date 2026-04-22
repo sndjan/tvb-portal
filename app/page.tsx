@@ -1,65 +1,180 @@
-import Image from "next/image";
+import { connection } from "next/server";
+import { Clock3, EyeOff, Plus, TriangleAlert, Users } from "lucide-react";
 
-export default function Home() {
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Task, getTaskFeed } from "@/lib/tasks";
+
+type HomePageProps = {
+  searchParams: Promise<{
+    admin?: string;
+  }>;
+};
+
+function formatDateTime(value: string) {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.valueOf())) {
+    return "Ungueltiges Datum";
+  }
+
+  return new Intl.DateTimeFormat("de-DE", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(date);
+}
+
+function formatDateRange(task: Task) {
+  if (task.startDate && task.endDate) {
+    return `${formatDateTime(task.startDate)} bis ${formatDateTime(task.endDate)}`;
+  }
+
+  if (task.startDate) {
+    return `Start: ${formatDateTime(task.startDate)}`;
+  }
+
+  if (task.endDate) {
+    return `Ende: ${formatDateTime(task.endDate)}`;
+  }
+
+  return "Kein Zeitraum gesetzt";
+}
+
+function EmptyState() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+    <div className="rounded-xl border border-dashed bg-card px-4 py-10 text-center">
+      <p className="text-sm text-muted-foreground">
+        Aktuell keine Arbeitseinsaetze
+      </p>
     </div>
+  );
+}
+
+function TaskList({ isAdmin, tasks }: { isAdmin: boolean; tasks: Task[] }) {
+  if (tasks.length === 0) {
+    return <EmptyState />;
+  }
+
+  return (
+    <div className="grid gap-4">
+      {tasks.map((task) => (
+        <Card key={task.id} className="border-l-4 border-l-primary/60">
+          <CardHeader className="gap-2">
+            <div className="flex items-start justify-between gap-3">
+              <div className="space-y-1">
+                <CardTitle className="text-base sm:text-lg">
+                  {task.title}
+                </CardTitle>
+                <CardDescription>{task.description}</CardDescription>
+              </div>
+              <Badge variant={task.status === "done" ? "secondary" : "default"}>
+                {task.status === "done" ? "Erledigt" : "Offen"}
+              </Badge>
+            </div>
+          </CardHeader>
+
+          <CardContent className="grid gap-2 text-sm sm:grid-cols-2">
+            <p className="text-muted-foreground">{formatDateRange(task)}</p>
+            <p className="flex items-center gap-2 text-muted-foreground">
+              <Clock3 className="size-4" aria-hidden="true" />
+              {task.durationEstimate || "Keine Dauer angegeben"}
+            </p>
+            <p className="flex items-center gap-2 text-muted-foreground">
+              <Users className="size-4" aria-hidden="true" />
+              {task.requiredPeople !== null
+                ? `${task.requiredPeople} benötigte Personen`
+                : "Benötigte Personen offen"}
+            </p>
+          </CardContent>
+
+          {isAdmin && task.isHidden ? (
+            <CardFooter>
+              <Badge variant="outline" className="gap-1">
+                <EyeOff className="size-3" aria-hidden="true" />
+                Versteckt (nur Admin)
+              </Badge>
+            </CardFooter>
+          ) : null}
+        </Card>
+      ))}
+    </div>
+  );
+}
+
+export default async function Home({ searchParams }: HomePageProps) {
+  await connection();
+
+  const params = await searchParams;
+  const isAdmin = params.admin === "1";
+
+  const feed = await getTaskFeed();
+  const visibleTasks = isAdmin
+    ? feed.tasks
+    : feed.tasks.filter((task) => !task.isHidden);
+  const openTasks = visibleTasks.filter((task) => task.status === "open");
+  const doneTasks = visibleTasks.filter((task) => task.status === "done");
+
+  return (
+    <main className="min-h-screen bg-linear-to-b from-background via-background to-muted/40 pb-14">
+      <section className="mx-auto flex w-full max-w-5xl flex-col gap-4 px-4 pt-4 sm:px-6 lg:px-8">
+        <header className="flex flex-col gap-4 rounded-2xl border bg-card/70 p-5 backdrop-blur-sm ">
+          <div className="flex flex-row gap-3 sm:items-center justify-between">
+            <div>
+              <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">
+                TV Bellenberg
+              </h1>
+              <p className="text-xs font-medium tracking-wider text-muted-foreground uppercase">
+                Arbeitseinsätze
+              </p>
+            </div>
+
+            {!isAdmin ? (
+              <Button disabled>
+                <Plus className="size-4" aria-hidden="true" />
+              </Button>
+            ) : null}
+          </div>
+        </header>
+
+        {!feed.error ? (
+          <Alert variant="destructive">
+            <TriangleAlert className="size-4" aria-hidden="true" />
+            <AlertTitle>Hinweis</AlertTitle>
+            <AlertDescription>{feed.error}</AlertDescription>
+          </Alert>
+        ) : null}
+
+        <Tabs defaultValue="open" className="w-full gap-4">
+          <TabsList>
+            <TabsTrigger value="open">Offen ({openTasks.length})</TabsTrigger>
+            <TabsTrigger value="done">
+              Erledigt ({doneTasks.length})
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="open" className="mt-0">
+            <TaskList isAdmin={isAdmin} tasks={openTasks} />
+          </TabsContent>
+
+          <TabsContent value="done" className="mt-0">
+            <TaskList isAdmin={isAdmin} tasks={doneTasks} />
+          </TabsContent>
+        </Tabs>
+
+        <footer className="text-xs text-muted-foreground">
+          Datenquelle: {feed.source === "supabase" ? "Supabase" : "Demo-Daten"}
+        </footer>
+      </section>
+    </main>
   );
 }
