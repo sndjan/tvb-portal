@@ -853,7 +853,7 @@ export async function deleteTask(taskId: string): Promise<void> {
   if (error) {
     throw new HttpError(
       500,
-      "Task konnte nicht geloescht werden",
+      "Task konnte nicht gelöscht werden",
       "task_delete_failed",
     );
   }
@@ -970,7 +970,7 @@ export async function removeTaskParticipant(
   if (error) {
     throw new HttpError(
       500,
-      "Teilnehmer konnte nicht geloescht werden",
+      "Teilnehmer konnte nicht gelöscht werden",
       "participant_delete_failed",
     );
   }
@@ -1154,7 +1154,7 @@ export async function deleteTaskImage(
   if (deleteError) {
     throw new HttpError(
       500,
-      "Bild konnte nicht geloescht werden",
+      "Bild konnte nicht gelöscht werden",
       "image_delete_failed",
     );
   }
@@ -1246,7 +1246,7 @@ export async function removeEmailRecipient(
   if (error) {
     throw new HttpError(
       500,
-      "E-Mail konnte nicht geloescht werden",
+      "E-Mail konnte nicht gelöscht werden",
       "email_delete_failed",
     );
   }
@@ -1266,7 +1266,7 @@ export async function notifyTaskCreated(
       attempted: false,
       sent: false,
       recipientCount: 0,
-      message: "Keine Empfaenger in der Verteilerliste",
+      message: "Keine Empfänger in der Verteilerliste",
     };
   }
 
@@ -1378,7 +1378,7 @@ export function buildTaskIcs(task: TaskRecord): string {
   return [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//TV Bellenberg//Arbeitseinsaetze//DE",
+    "PRODID:-//TV Bellenberg//Arbeitseinsätze//DE",
     "CALSCALE:GREGORIAN",
     "BEGIN:VEVENT",
     `UID:task-${task.id}@tvb-portal`,

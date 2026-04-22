@@ -16,8 +16,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "TVB Arbeitseinsaetze",
-  description: "Verwaltung und Anzeige von Arbeitseinsaetzen im Tennisverein",
+  title: "TVB Arbeitseinsätze",
+  description: "Verwaltung und Anzeige von Arbeitseinsätzen im Tennisverein",
 };
 
 export default function RootLayout({
