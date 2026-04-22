@@ -28,7 +28,7 @@ Ein Admin (Platzwart) verwaltet alle Inhalte.
 
 - Kein Login erforderlich
 - Darf:
-  - Arbeitseinsätze einsehen
+  - [x] Arbeitseinsätze einsehen
   - sich für Einsätze eintragen
   - eigene Eintragung löschen (über LocalStorage)
 
@@ -96,8 +96,8 @@ Ein Admin (Platzwart) verwaltet alle Inhalte.
 ## 6. Sichtbarkeit
 
 - Versteckte Einsätze:
-  - nur für Admin sichtbar
-  - komplett unsichtbar für Viewer
+  - [x] nur für Admin sichtbar
+  - [x] komplett unsichtbar für Viewer
 
 ---
 
@@ -140,13 +140,13 @@ Ein Admin (Platzwart) verwaltet alle Inhalte.
 ### Sonderfälle
 
 - Keine Einsätze:
-  - Anzeige: „Aktuell keine Arbeitseinsätze“
+  - [x] Anzeige: „Aktuell keine Arbeitseinsätze“
 
 - Ladezustände:
   - Skeleton Loader
 
 - Fehler:
-  - Allgemeine Fehlermeldung bei Backend-Problemen
+  - [x] Allgemeine Fehlermeldung bei Backend-Problemen
 
 ---
 
@@ -236,7 +236,7 @@ Ein Admin (Platzwart) verwaltet alle Inhalte.
 ## 13. Fehlerhandling
 
 - Backend nicht erreichbar:
-  - Fehlermeldung anzeigen
+  - [x] Fehlermeldung anzeigen
 
 - E-Mail-Versand fehlgeschlagen:
   - Admin bekommt Feedback

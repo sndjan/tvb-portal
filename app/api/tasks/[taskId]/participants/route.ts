@@ -1,0 +1,77 @@
+import type { NextRequest } from "next/server";
+
+import { toRouteErrorResponse } from "@/lib/backend/errors";
+import {
+  isAdminRequest,
+  readJsonBody,
+  requireNonEmptyTaskId,
+} from "@/lib/backend/route-helpers";
+import {
+  addTaskParticipant,
+  listTaskParticipants,
+  parseAddParticipantInput,
+  parseRemoveParticipantInput,
+  removeTaskParticipant,
+} from "@/lib/backend/tasks-service";
+
+export const runtime = "nodejs";
+
+type TaskParticipantsRouteContext = {
+  params: Promise<{
+    taskId: string;
+  }>;
+};
+
+export async function GET(
+  request: NextRequest,
+  context: TaskParticipantsRouteContext,
+) {
+  try {
+    const { taskId } = await context.params;
+    const id = requireNonEmptyTaskId(taskId);
+    const isAdmin = isAdminRequest(request);
+    const snapshot = await listTaskParticipants(id, isAdmin);
+
+    return Response.json({
+      count: snapshot.count,
+      participants: snapshot.participants,
+      isAdmin,
+    });
+  } catch (error) {
+    return toRouteErrorResponse(error);
+  }
+}
+
+export async function POST(
+  request: NextRequest,
+  context: TaskParticipantsRouteContext,
+) {
+  try {
+    const { taskId } = await context.params;
+    const id = requireNonEmptyTaskId(taskId);
+    const body = await readJsonBody(request);
+    const input = parseAddParticipantInput(body);
+    const participant = await addTaskParticipant(id, input);
+
+    return Response.json({ participant }, { status: 201 });
+  } catch (error) {
+    return toRouteErrorResponse(error);
+  }
+}
+
+export async function DELETE(
+  request: NextRequest,
+  context: TaskParticipantsRouteContext,
+) {
+  try {
+    const { taskId } = await context.params;
+    const id = requireNonEmptyTaskId(taskId);
+    const body = await readJsonBody(request);
+    const input = parseRemoveParticipantInput(body);
+    await removeTaskParticipant(id, input);
+
+    return Response.json({ ok: true });
+  } catch (error) {
+    return toRouteErrorResponse(error);
+  }
+}

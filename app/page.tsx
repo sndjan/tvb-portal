@@ -13,6 +13,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { isAdminSessionActive } from "@/lib/backend/admin-session";
 import { Task, getTaskFeed } from "@/lib/tasks";
 
 type HomePageProps = {
@@ -115,7 +116,8 @@ export default async function Home({ searchParams }: HomePageProps) {
   await connection();
 
   const params = await searchParams;
-  const isAdmin = params.admin === "1";
+  const hasAdminSession = await isAdminSessionActive();
+  const isAdmin = hasAdminSession || params.admin === "1";
 
   const feed = await getTaskFeed();
   const visibleTasks = isAdmin
@@ -138,7 +140,7 @@ export default async function Home({ searchParams }: HomePageProps) {
               </p>
             </div>
 
-            {!isAdmin ? (
+            {isAdmin ? (
               <Button disabled>
                 <Plus className="size-4" aria-hidden="true" />
               </Button>
@@ -146,7 +148,7 @@ export default async function Home({ searchParams }: HomePageProps) {
           </div>
         </header>
 
-        {!feed.error ? (
+        {feed.error ? (
           <Alert variant="destructive">
             <TriangleAlert className="size-4" aria-hidden="true" />
             <AlertTitle>Hinweis</AlertTitle>
