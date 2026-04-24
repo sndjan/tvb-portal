@@ -1,13 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
 import {
   CalendarDays,
   Clock3,
   EyeOff,
   ImagePlus,
   ListChecks,
-  LogIn,
   LogOut,
   Mail,
   Plus,
@@ -15,9 +13,12 @@ import {
   Send,
   Trash2,
   TriangleAlert,
-  Users,
+  Users
 } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 
+import { LoginForm } from "@/components/LoginForm";
+import { NewEntryForm } from "@/components/NewEntryForm";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -29,8 +30,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -39,205 +38,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
+import { requestJson } from "@/lib/api";
+import { CreateTaskFormState, EditTaskFormState, EmailRecipient, ImageRecord, PendingUpload, TasksResponse, TaskStatus, TaskWithDetails } from "@/lib/types";
+import { baseFieldClass, formatDateRange, fromDateTimeLocalValue, getDefaultCreateForm, toDateTimeLocalValue, toMessage } from "@/lib/utils";
 
-type TaskStatus = "open" | "done";
-
-type ParticipantRecord = {
-  id: string;
-  taskId: string;
-  name: string;
-  createdAt: string;
-};
-
-type ImageRecord = {
-  id: string;
-  taskId: string;
-  url: string;
-  createdAt: string;
-};
-
-type TaskWithDetails = {
-  id: string;
-  title: string;
-  description: string;
-  startDate: string | null;
-  endDate: string | null;
-  durationEstimate: string | null;
-  requiredPeople: number | null;
-  status: TaskStatus;
-  isHidden: boolean;
-  createdAt: string;
-  participantCount: number;
-  participants: ParticipantRecord[] | null;
-  images: ImageRecord[];
-};
-
-type TasksResponse = {
-  tasks: TaskWithDetails[];
-  isAdmin: boolean;
-};
-
-type EmailRecipient = {
-  id: string;
-  email: string;
-};
-
-type CreateTaskFormState = {
-  title: string;
-  description: string;
-  startDate: string;
-  endDate: string;
-  durationEstimate: string;
-  requiredPeople: string;
-  status: TaskStatus;
-  isHidden: boolean;
-  sendEmail: boolean;
-};
-
-type EditTaskFormState = {
-  title: string;
-  description: string;
-  startDate: string;
-  endDate: string;
-  durationEstimate: string;
-  requiredPeople: string;
-  status: TaskStatus;
-  isHidden: boolean;
-};
-
-type PendingUpload = {
-  files: File[];
-  previews: string[];
-};
-
-const GENERAL_BACKEND_ERROR =
-  "Backend nicht erreichbar. Bitte spaeter erneut versuchen.";
-
-const baseFieldClass =
-  "w-full rounded-md border border-input bg-background px-3 py-2 text-sm leading-tight";
-
-function getDefaultCreateForm(): CreateTaskFormState {
-  return {
-    title: "",
-    description: "",
-    startDate: "",
-    endDate: "",
-    durationEstimate: "",
-    requiredPeople: "",
-    status: "open",
-    isHidden: false,
-    sendEmail: false,
-  };
-}
-
-function toDateTimeLocalValue(value: string | null): string {
-  if (!value) {
-    return "";
-  }
-
-  const date = new Date(value);
-
-  if (Number.isNaN(date.valueOf())) {
-    return "";
-  }
-
-  const pad = (n: number) => String(n).padStart(2, "0");
-  const year = date.getFullYear();
-  const month = pad(date.getMonth() + 1);
-  const day = pad(date.getDate());
-  const hour = pad(date.getHours());
-  const minute = pad(date.getMinutes());
-
-  return `${year}-${month}-${day}T${hour}:${minute}`;
-}
-
-function fromDateTimeLocalValue(value: string): string | null {
-  const trimmed = value.trim();
-
-  if (!trimmed) {
-    return null;
-  }
-
-  const date = new Date(trimmed);
-
-  if (Number.isNaN(date.valueOf())) {
-    return null;
-  }
-
-  return date.toISOString();
-}
-
-function formatDateTime(value: string) {
-  const date = new Date(value);
-
-  if (Number.isNaN(date.valueOf())) {
-    return "Ungueltiges Datum";
-  }
-
-  return new Intl.DateTimeFormat("de-DE", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(date);
-}
-
-function formatDateRange(task: TaskWithDetails) {
-  if (task.startDate && task.endDate) {
-    return `${formatDateTime(task.startDate)} bis ${formatDateTime(task.endDate)}`;
-  }
-
-  if (task.startDate) {
-    return `Start: ${formatDateTime(task.startDate)}`;
-  }
-
-  if (task.endDate) {
-    return `Ende: ${formatDateTime(task.endDate)}`;
-  }
-
-  return "Kein Zeitraum gesetzt";
-}
-
-function toMessage(error: unknown): string {
-  if (error instanceof Error && error.message) {
-    return error.message;
-  }
-
-  return GENERAL_BACKEND_ERROR;
-}
-
-async function requestJson<T>(url: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(url, {
-    ...init,
-    headers:
-      init?.body instanceof FormData
-        ? init.headers
-        : {
-            "content-type": "application/json",
-            ...(init?.headers || {}),
-          },
-    cache: "no-store",
-  });
-
-  let payload: unknown = null;
-
-  try {
-    payload = await response.json();
-  } catch {
-    payload = null;
-  }
-
-  if (!response.ok) {
-    const errorMessage =
-      typeof payload === "object" && payload && "error" in payload
-        ? String((payload as { error?: unknown }).error || "")
-        : "Request fehlgeschlagen";
-    throw new Error(
-      errorMessage || `Request fehlgeschlagen (${response.status})`,
-    );
-  }
-
-  return payload as T;
-}
 
 function EmptyState() {
   return (
@@ -722,27 +529,17 @@ export function HomeClient() {
               </p>
             </div>
 
-            <div className="flex items-center gap-2">
-              {isAdmin ? (
-                <Badge variant="secondary" className="gap-1">
-                  <ListChecks className="size-3.5" aria-hidden="true" />
-                  Admin aktiv
-                </Badge>
-              ) : (
-                <Badge variant="outline">Öffentliche Ansicht</Badge>
-              )}
-              {isAdmin ? (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleLogout}
-                  disabled={isLoggingOut}
-                >
-                  <LogOut className="size-4" aria-hidden="true" />
-                  Logout
-                </Button>
-              ) : null}
-            </div>
+            {isAdmin ? (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleLogout}
+                disabled={isLoggingOut}
+              >
+                <LogOut className="size-4" aria-hidden="true" />
+                Logout
+              </Button>
+            ) : null}
           </div>
         </header>
 
@@ -763,187 +560,22 @@ export function HomeClient() {
         ) : null}
 
         {!isAdmin ? (
-          <Card>
-            <CardHeader>
-              <CardTitle>Admin Login</CardTitle>
-              <CardDescription>
-                Mit globalem Passwort anmelden, um Einsätze zu verwalten.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form
-                onSubmit={handleLoginSubmit}
-                className="flex flex-col gap-3 sm:flex-row"
-              >
-                <Input
-                  type="password"
-                  autoComplete="current-password"
-                  className={baseFieldClass}
-                  placeholder="Admin Passwort"
-                  value={loginPassword}
-                  onChange={(event) => setLoginPassword(event.target.value)}
-                  required
-                />
-                <Button type="submit" disabled={isLoggingIn}>
-                  <LogIn className="size-4" aria-hidden="true" />
-                  Einloggen
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
+          <LoginForm 
+            loginPassword={loginPassword}
+            setLoginPassword={setLoginPassword}
+            isLoggingIn={isLoggingIn}
+            handleLoginSubmit={handleLoginSubmit}
+            />
         ) : null}
 
         {isAdmin ? (
           <div className="grid gap-4 lg:grid-cols-[2fr_1fr]">
-            <Card>
-              <CardHeader>
-                <CardTitle>Neuen Einsatz erstellen</CardTitle>
-                <CardDescription>
-                  Titel und Beschreibung sind Pflichtfelder. E-Mail Versand ist
-                  optional.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form className="grid gap-3" onSubmit={handleCreateTask}>
-                  <Input
-                    className={baseFieldClass}
-                    placeholder="Titel"
-                    value={createForm.title}
-                    onChange={(event) =>
-                      setCreateForm((prev) => ({
-                        ...prev,
-                        title: event.target.value,
-                      }))
-                    }
-                    required
-                  />
-                  <Textarea
-                    className={`${baseFieldClass} min-h-24`}
-                    placeholder="Beschreibung"
-                    value={createForm.description}
-                    onChange={(event) =>
-                      setCreateForm((prev) => ({
-                        ...prev,
-                        description: event.target.value,
-                      }))
-                    }
-                    required
-                  />
-
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <label className="grid gap-1 text-xs text-muted-foreground">
-                      Startdatum
-                      <Input
-                        type="datetime-local"
-                        className={baseFieldClass}
-                        value={createForm.startDate}
-                        onChange={(event) =>
-                          setCreateForm((prev) => ({
-                            ...prev,
-                            startDate: event.target.value,
-                          }))
-                        }
-                      />
-                    </label>
-                    <label className="grid gap-1 text-xs text-muted-foreground">
-                      Enddatum
-                      <Input
-                        type="datetime-local"
-                        className={baseFieldClass}
-                        value={createForm.endDate}
-                        onChange={(event) =>
-                          setCreateForm((prev) => ({
-                            ...prev,
-                            endDate: event.target.value,
-                          }))
-                        }
-                      />
-                    </label>
-                  </div>
-
-                  <div className="grid gap-3 sm:grid-cols-3">
-                    <Input
-                      className={baseFieldClass}
-                      placeholder="Dauer (z.B. 3 Stunden)"
-                      value={createForm.durationEstimate}
-                      onChange={(event) =>
-                        setCreateForm((prev) => ({
-                          ...prev,
-                          durationEstimate: event.target.value,
-                        }))
-                      }
-                    />
-                    <Input
-                      type="number"
-                      min={1}
-                      className={baseFieldClass}
-                      placeholder="Benötigte Personen"
-                      value={createForm.requiredPeople}
-                      onChange={(event) =>
-                        setCreateForm((prev) => ({
-                          ...prev,
-                          requiredPeople: event.target.value,
-                        }))
-                      }
-                    />
-                    <Select
-                      value={createForm.status}
-                      onValueChange={(event) =>
-                        setCreateForm((prev) => ({
-                          ...prev,
-                          status: event as TaskStatus,
-                        }))
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Status auswählen" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="open">Offen</SelectItem>
-                        <SelectItem value="done">Erledigt</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="flex flex-col gap-2 text-sm sm:flex-row sm:items-center">
-                    <label className="inline-flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        checked={createForm.isHidden}
-                        onChange={(event) =>
-                          setCreateForm((prev) => ({
-                            ...prev,
-                            isHidden: event.target.checked,
-                          }))
-                        }
-                      />
-                      Versteckt (nur Admin)
-                    </label>
-
-                    <label className="inline-flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        checked={createForm.sendEmail}
-                        onChange={(event) =>
-                          setCreateForm((prev) => ({
-                            ...prev,
-                            sendEmail: event.target.checked,
-                          }))
-                        }
-                      />
-                      E-Mail senden
-                    </label>
-                  </div>
-
-                  <div>
-                    <Button type="submit" disabled={isCreatingTask}>
-                      <Plus className="size-4" aria-hidden="true" />
-                      Einsatz erstellen
-                    </Button>
-                  </div>
-                </form>
-              </CardContent>
-            </Card>
+            <NewEntryForm 
+              handleCreateTask={handleCreateTask}
+              createForm={createForm}
+              setCreateForm={setCreateForm}
+              isCreatingTask={isCreatingTask}
+            />
 
             <Card>
               <CardHeader>
