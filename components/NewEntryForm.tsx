@@ -5,6 +5,7 @@ import { Button } from "./ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Input } from "./ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+import { Spinner } from "./ui/spinner";
 import { Textarea } from "./ui/textarea";
 
 type NewEntryFormProps = {
@@ -185,7 +186,7 @@ export const NewEntryForm = ({
 
                 <div>
                 <Button type="submit" disabled={isCreatingTask}>
-                    <Plus className="size-4" aria-hidden="true" />
+                    {isCreatingTask ? <Spinner /> : <Plus className="size-4" aria-hidden="true" />}
                     Einsatz erstellen
                 </Button>
                 </div>

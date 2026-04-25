@@ -67,3 +67,18 @@ export type PendingUpload = {
   files: File[];
   previews: string[];
 };
+
+export type BusyTask = {
+  id: string;
+  busy: boolean;
+  busyAction: Action;
+};
+
+export enum Action {
+  ToggleStatus = "toggle_status",
+  ToggleVisibility = "toggle_visibility",
+  SaveEdit = "save_edit",
+  DeleteTask = "delete_task",
+  UploadImages = "upload_images",
+  DeleteImage = "delete_image",
+}
