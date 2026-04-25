@@ -1,5 +1,5 @@
-import { clsx, type ClassValue } from "clsx"
-import { twMerge } from "tailwind-merge"
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
 import { CreateTaskFormState, TaskWithDetails } from "./types";
 
 export function cn(...inputs: ClassValue[]) {
@@ -16,7 +16,7 @@ export function getDefaultCreateForm(): CreateTaskFormState {
     startDate: "",
     endDate: "",
     durationEstimate: "",
-    requiredPeople: "",
+    maxParticipants: "",
     status: "open",
     isHidden: false,
     sendEmail: false,

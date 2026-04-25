@@ -3,7 +3,8 @@ export type TaskStatus = "open" | "done";
 export type ParticipantRecord = {
   id: string;
   taskId: string;
-  name: string;
+  firstName: string;
+  lastName: string;
   createdAt: string;
 };
 
@@ -21,7 +22,7 @@ export type TaskWithDetails = {
   startDate: string | null;
   endDate: string | null;
   durationEstimate: string | null;
-  requiredPeople: number | null;
+  maxParticipants: number | null;
   status: TaskStatus;
   isHidden: boolean;
   createdAt: string;
@@ -46,7 +47,7 @@ export type CreateTaskFormState = {
   startDate: string;
   endDate: string;
   durationEstimate: string;
-  requiredPeople: string;
+  maxParticipants: string;
   status: TaskStatus;
   isHidden: boolean;
   sendEmail: boolean;
@@ -58,7 +59,7 @@ export type EditTaskFormState = {
   startDate: string;
   endDate: string;
   durationEstimate: string;
-  requiredPeople: string;
+  maxParticipants: string;
   status: TaskStatus;
   isHidden: boolean;
 };

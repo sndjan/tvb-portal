@@ -20,15 +20,15 @@ create table if not exists public.tasks (
   start_date timestamptz,
   end_date timestamptz,
   duration_estimate text,
-  required_people integer,
+  max_participants integer,
   status text not null default 'open',
   is_hidden boolean not null default false,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   constraint tasks_title_not_empty check (char_length(trim(title)) > 0),
   constraint tasks_description_not_empty check (char_length(trim(description)) > 0),
-  constraint tasks_required_people_positive check (
-    required_people is null or required_people > 0
+  constraint tasks_max_participants_positive check (
+    max_participants is null or max_participants > 0
   ),
   constraint tasks_status_valid check (status in ('open', 'done')),
   constraint tasks_date_order check (
@@ -41,16 +41,18 @@ before update on public.tasks
 for each row
 execute function public.set_updated_at();
 
-create table if not exists public.participants (
+create table if not exists public.self_registered_participants (
   id uuid primary key default gen_random_uuid(),
   task_id uuid not null references public.tasks(id) on delete cascade,
-  name text not null,
+  first_name text not null,
+  last_name text not null,
   created_at timestamptz not null default now(),
-  constraint participants_name_not_empty check (char_length(trim(name)) > 0)
+  constraint self_registered_participants_first_name_not_empty check (char_length(trim(first_name)) > 0),
+  constraint self_registered_participants_last_name_not_empty check (char_length(trim(last_name)) > 0)
 );
 
-create unique index if not exists participants_task_name_ci_unique
-on public.participants (task_id, lower(name));
+create unique index if not exists self_registered_participants_task_name_ci_unique
+on public.self_registered_participants (task_id, lower(first_name), lower(last_name));
 
 create table if not exists public.images (
   id uuid primary key default gen_random_uuid(),
@@ -71,7 +73,7 @@ create table if not exists public.email_list (
 );
 
 alter table public.tasks enable row level security;
-alter table public.participants enable row level security;
+alter table public.self_registered_participants enable row level security;
 alter table public.images enable row level security;
 alter table public.email_list enable row level security;
 
@@ -83,7 +85,7 @@ for select
 to anon, authenticated
 using (is_hidden = false);
 
--- Participants, images, and email list are served via server routes using service role.
+-- Self-registered participants, images, and email list are served via server routes using service role.
 -- Keep direct anon/authenticated access blocked by not creating additional policies.
 
 insert into storage.buckets (id, name, public)

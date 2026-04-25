@@ -8,6 +8,7 @@ import {
 } from "@/lib/backend/route-helpers";
 import {
   addTaskParticipant,
+  hasTaskParticipant,
   listTaskParticipants,
   parseAddParticipantInput,
   parseRemoveParticipantInput,
@@ -31,6 +32,24 @@ export async function GET(
     const id = requireNonEmptyTaskId(taskId);
     const isAdmin = isAdminRequest(request);
     const snapshot = await listTaskParticipants(id, isAdmin);
+
+    if (!isAdmin) {
+      const firstName = request.nextUrl.searchParams.get("firstName")?.trim();
+      const lastName = request.nextUrl.searchParams.get("lastName")?.trim();
+
+      if (firstName && lastName) {
+        const isRegistered = await hasTaskParticipant(id, {
+          firstName,
+          lastName,
+        });
+
+        return Response.json({
+          count: snapshot.count,
+          isRegistered,
+          isAdmin,
+        });
+      }
+    }
 
     return Response.json({
       count: snapshot.count,

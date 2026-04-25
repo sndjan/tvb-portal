@@ -19,7 +19,7 @@ export type TaskRecord = {
   startDate: string | null;
   endDate: string | null;
   durationEstimate: string | null;
-  requiredPeople: number | null;
+  maxParticipants: number | null;
   status: TaskStatus;
   isHidden: boolean;
   createdAt: string;
@@ -28,7 +28,8 @@ export type TaskRecord = {
 export type ParticipantRecord = {
   id: string;
   taskId: string;
-  name: string;
+  firstName: string;
+  lastName: string;
   createdAt: string;
 };
 
@@ -64,7 +65,7 @@ type TaskRow = {
   start_date: string | null;
   end_date: string | null;
   duration_estimate: string | number | null;
-  required_people: number | null;
+  max_participants: number | null;
   status: string | null;
   is_hidden: boolean | null;
   created_at: string | null;
@@ -73,7 +74,8 @@ type TaskRow = {
 type ParticipantRow = {
   id: string | number;
   task_id: string | number;
-  name: string | null;
+  first_name: string | null;
+  last_name: string | null;
   created_at: string | null;
 };
 
@@ -89,9 +91,9 @@ type ImageRow = {
 };
 
 const TASK_SELECT_COLUMNS =
-  "id, title, description, start_date, end_date, duration_estimate, required_people, status, is_hidden, created_at";
+  "id, title, description, start_date, end_date, duration_estimate, max_participants, status, is_hidden, created_at";
 
-const optionalRequiredPeopleSchema = z.preprocess((value) => {
+const optionalMaxParticipantsSchema = z.preprocess((value) => {
   if (value === undefined || value === null || value === "") {
     return null;
   }
@@ -129,7 +131,7 @@ const createTaskBodySchema = z.object({
   startDate: z.string().trim().max(80).nullable().optional(),
   endDate: z.string().trim().max(80).nullable().optional(),
   durationEstimate: z.string().trim().max(120).nullable().optional(),
-  requiredPeople: optionalRequiredPeopleSchema.optional(),
+  maxParticipants: optionalMaxParticipantsSchema.optional(),
   status: z.enum(["open", "done"]).optional(),
   isHidden: optionalBooleanSchema.optional(),
   sendEmail: optionalBooleanSchema.optional(),
@@ -143,11 +145,13 @@ const updateTaskBodySchema = createTaskBodySchema
   });
 
 const addParticipantBodySchema = z.object({
-  name: z.string().trim().min(2).max(80),
+  firstName: z.string().trim().min(2).max(80),
+  lastName: z.string().trim().min(2).max(80),
 });
 
 const removeParticipantBodySchema = z.object({
-  participantId: z.union([z.string(), z.number()]),
+  firstName: z.string().trim().min(2).max(80),
+  lastName: z.string().trim().min(2).max(80),
 });
 
 const addEmailRecipientBodySchema = z.object({
@@ -164,7 +168,7 @@ export type CreateTaskInput = {
   startDate: string | null;
   endDate: string | null;
   durationEstimate: string | null;
-  requiredPeople: number | null;
+  maxParticipants: number | null;
   status: TaskStatus;
   isHidden: boolean;
   sendEmail: boolean;
@@ -175,11 +179,13 @@ export type UpdateTaskInput = Partial<
 >;
 
 export type AddParticipantInput = {
-  name: string;
+  firstName: string;
+  lastName: string;
 };
 
 export type RemoveParticipantInput = {
-  participantId: string;
+  firstName: string;
+  lastName: string;
 };
 
 export type AddEmailRecipientInput = {
@@ -271,7 +277,7 @@ export function parseCreateTaskInput(input: unknown): CreateTaskInput {
     startDate,
     endDate,
     durationEstimate: normalizeOptionalText(payload.durationEstimate),
-    requiredPeople: payload.requiredPeople ?? null,
+    maxParticipants: payload.maxParticipants ?? null,
     status: payload.status ?? "open",
     isHidden: payload.isHidden ?? false,
     sendEmail: payload.sendEmail ?? false,
@@ -335,8 +341,8 @@ export function parseUpdateTaskInput(input: unknown): UpdateTaskInput {
     );
   }
 
-  if (Object.prototype.hasOwnProperty.call(payload, "requiredPeople")) {
-    normalized.requiredPeople = payload.requiredPeople ?? null;
+  if (Object.prototype.hasOwnProperty.call(payload, "maxParticipants")) {
+    normalized.maxParticipants = payload.maxParticipants ?? null;
   }
 
   if (Object.prototype.hasOwnProperty.call(payload, "status")) {
@@ -366,7 +372,8 @@ export function parseAddParticipantInput(input: unknown): AddParticipantInput {
   }
 
   return {
-    name: normalizeWhitespace(parsed.data.name),
+    firstName: normalizeWhitespace(parsed.data.firstName),
+    lastName: normalizeWhitespace(parsed.data.lastName),
   };
 }
 
@@ -379,7 +386,10 @@ export function parseRemoveParticipantInput(
     throw toValidationError(parsed.error);
   }
 
-  return { participantId: String(parsed.data.participantId) };
+  return {
+    firstName: normalizeWhitespace(parsed.data.firstName),
+    lastName: normalizeWhitespace(parsed.data.lastName),
+  };
 }
 
 export function parseAddEmailRecipientInput(
@@ -421,7 +431,7 @@ function mapTaskRow(row: TaskRow): TaskRecord {
       typeof row.duration_estimate === "number"
         ? `${row.duration_estimate} Stunden`
         : row.duration_estimate,
-    requiredPeople: row.required_people,
+    maxParticipants: row.max_participants,
     status: row.status === "done" ? "done" : "open",
     isHidden: Boolean(row.is_hidden),
     createdAt: row.created_at || new Date(0).toISOString(),
@@ -432,7 +442,8 @@ function mapParticipantRow(row: ParticipantRow): ParticipantRecord {
   return {
     id: String(row.id),
     taskId: String(row.task_id),
-    name: row.name?.trim() || "Unbekannt",
+    firstName: row.first_name?.trim() || "Unbekannt",
+    lastName: row.last_name?.trim() || "Unbekannt",
     createdAt: row.created_at || new Date(0).toISOString(),
   };
 }
@@ -563,8 +574,8 @@ export async function listTasks(
 
   if (options.includeParticipantNames) {
     const { data: participantRows, error: participantError } = await supabase
-      .from("participants")
-      .select("id, task_id, name, created_at")
+      .from("self_registered_participants")
+      .select("id, task_id,first_name, last_name, created_at")
       .in("task_id", taskIds)
       .order("created_at", { ascending: true });
 
@@ -586,7 +597,7 @@ export async function listTasks(
   } else {
     const { data: participantCountRows, error: participantCountError } =
       await supabase
-        .from("participants")
+        .from("self_registered_participants")
         .select("task_id")
         .in("task_id", taskIds);
 
@@ -656,7 +667,7 @@ export async function getTaskById(
 
   if (!includeParticipantNames) {
     const { count, error: countError } = await supabase
-      .from("participants")
+      .from("self_registered_participants")
       .select("id", { count: "exact", head: true })
       .eq("task_id", task.id);
 
@@ -677,8 +688,8 @@ export async function getTaskById(
   }
 
   const { data: participantRows, error: participantError } = await supabase
-    .from("participants")
-    .select("id, task_id, name, created_at")
+    .from("self_registered_participants")
+    .select("id, task_id,first_name, last_name, created_at")
     .eq("task_id", task.id)
     .order("created_at", { ascending: true });
 
@@ -713,7 +724,7 @@ export async function createTask(input: CreateTaskInput): Promise<TaskRecord> {
       start_date: input.startDate,
       end_date: input.endDate,
       duration_estimate: input.durationEstimate,
-      required_people: input.requiredPeople,
+      max_participants: input.maxParticipants,
       status: input.status,
       is_hidden: input.isHidden,
     })
@@ -773,7 +784,7 @@ export async function updateTask(
     start_date?: string | null;
     end_date?: string | null;
     duration_estimate?: string | null;
-    required_people?: number | null;
+    max_participants?: number | null;
     status?: TaskStatus;
     is_hidden?: boolean;
   } = {};
@@ -798,8 +809,8 @@ export async function updateTask(
     updatePayload.duration_estimate = input.durationEstimate ?? null;
   }
 
-  if (Object.prototype.hasOwnProperty.call(input, "requiredPeople")) {
-    updatePayload.required_people = input.requiredPeople ?? null;
+  if (Object.prototype.hasOwnProperty.call(input, "maxParticipants")) {
+    updatePayload.max_participants = input.maxParticipants ?? null;
   }
 
   if (Object.prototype.hasOwnProperty.call(input, "status")) {
@@ -873,7 +884,7 @@ export async function listTaskParticipants(
 
   if (!includeNames) {
     const { count, error } = await supabase
-      .from("participants")
+      .from("self_registered_participants")
       .select("id", { count: "exact", head: true })
       .eq("task_id", taskId);
 
@@ -892,8 +903,8 @@ export async function listTaskParticipants(
   }
 
   const { data, error } = await supabase
-    .from("participants")
-    .select("id, task_id, name, created_at")
+    .from("self_registered_participants")
+    .select("id, task_id,first_name, last_name, created_at")
     .eq("task_id", taskId)
     .order("created_at", { ascending: true });
 
@@ -919,18 +930,32 @@ export async function addTaskParticipant(
   taskId: string,
   input: AddParticipantInput,
 ): Promise<ParticipantRecord> {
-  await ensureTaskExists(taskId);
+  const task = await getTaskById(taskId, false);
+
+  if (!task) {
+    throw new HttpError(404, "Task nicht gefunden", "task_not_found");
+  }
+
+  if (task.maxParticipants !== null && task.participantCount >= task.maxParticipants) {
+    throw new HttpError(
+      409,
+      "Die maximale Teilnehmerzahl ist bereits erreicht",
+      "participant_limit_reached",
+    );
+  }
 
   const supabase = getSupabaseServiceClientOrThrow();
-  const normalizedName = normalizeWhitespace(input.name);
+  const normalizedFirstName = normalizeWhitespace(input.firstName);
+  const normalizedLastName = normalizeWhitespace(input.lastName);
 
   const { data, error } = await supabase
-    .from("participants")
+    .from("self_registered_participants")
     .insert({
       task_id: taskId,
-      name: normalizedName,
+      first_name: normalizedFirstName,
+      last_name: normalizedLastName,
     })
-    .select("id, task_id, name, created_at")
+    .select("id, task_id, first_name, last_name, created_at")
     .single();
 
   if (error) {
@@ -959,11 +984,15 @@ export async function removeTaskParticipant(
   await ensureTaskExists(taskId);
 
   const supabase = getSupabaseServiceClientOrThrow();
+  const normalizedFirstName = normalizeWhitespace(input.firstName);
+  const normalizedLastName = normalizeWhitespace(input.lastName);
+
   const { data, error } = await supabase
-    .from("participants")
+    .from("self_registered_participants")
     .delete()
     .eq("task_id", taskId)
-    .eq("id", input.participantId)
+    .ilike("first_name", normalizedFirstName)
+    .ilike("last_name", normalizedLastName)
     .select("id")
     .limit(1);
 
@@ -978,6 +1007,35 @@ export async function removeTaskParticipant(
   if (!data || data.length === 0) {
     throw new HttpError(404, "Eintrag nicht gefunden", "participant_not_found");
   }
+}
+
+export async function hasTaskParticipant(
+  taskId: string,
+  input: AddParticipantInput,
+): Promise<boolean> {
+  await ensureTaskExists(taskId);
+
+  const supabase = getSupabaseServiceClientOrThrow();
+  const normalizedFirstName = normalizeWhitespace(input.firstName);
+  const normalizedLastName = normalizeWhitespace(input.lastName);
+
+  const { data, error } = await supabase
+    .from("self_registered_participants")
+    .select("id")
+    .eq("task_id", taskId)
+    .ilike("first_name", normalizedFirstName)
+    .ilike("last_name", normalizedLastName)
+    .limit(1);
+
+  if (error) {
+    throw new HttpError(
+      500,
+      "Teilnehmerstatus konnte nicht geladen werden",
+      "participants_fetch_failed",
+    );
+  }
+
+  return Boolean(data && data.length > 0);
 }
 
 function sanitizeFileName(fileName: string): string {

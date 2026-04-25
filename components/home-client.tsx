@@ -6,7 +6,6 @@ import { useEffect, useMemo, useState } from "react";
 import { LoginForm } from "@/components/LoginForm";
 import { MailingList } from "@/components/MailingList";
 import { NewEntryForm } from "@/components/NewEntryForm";
-import { TaskCards } from "@/components/TaskCards";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -30,6 +29,7 @@ import {
   toMessage,
 } from "@/lib/utils";
 import { toast } from "sonner";
+import { TaskCards } from "./TaskCards";
 import { Spinner } from "./ui/spinner";
 
 function EmptyState() {
@@ -207,7 +207,7 @@ export function HomeClient() {
     setIsCreatingTask(true);
 
     try {
-      const requiredPeopleValue = createForm.requiredPeople.trim();
+      const maxParticipantsValue = createForm.maxParticipants.trim();
 
       const payload = {
         title: createForm.title,
@@ -215,8 +215,8 @@ export function HomeClient() {
         startDate: fromDateTimeLocalValue(createForm.startDate),
         endDate: fromDateTimeLocalValue(createForm.endDate),
         durationEstimate: createForm.durationEstimate.trim() || null,
-        requiredPeople: requiredPeopleValue
-          ? Number(requiredPeopleValue)
+        maxParticipants: maxParticipantsValue
+          ? Number(maxParticipantsValue)
           : null,
         status: createForm.status,
         isHidden: createForm.isHidden,
@@ -255,8 +255,8 @@ export function HomeClient() {
       startDate: toDateTimeLocalValue(task.startDate),
       endDate: toDateTimeLocalValue(task.endDate),
       durationEstimate: task.durationEstimate || "",
-      requiredPeople:
-        task.requiredPeople === null ? "" : String(task.requiredPeople),
+      maxParticipants:
+        task.maxParticipants === null ? "" : String(task.maxParticipants),
       status: task.status,
       isHidden: task.isHidden,
     });
@@ -270,7 +270,7 @@ export function HomeClient() {
     setTaskBusy(taskId, true, Action.SaveEdit);
 
     try {
-      const requiredPeopleValue = editForm.requiredPeople.trim();
+      const maxParticipantsValue = editForm.maxParticipants.trim();
 
       await requestJson<{ task: TaskWithDetails }>(`/api/tasks/${taskId}`, {
         method: "PATCH",
@@ -280,8 +280,8 @@ export function HomeClient() {
           startDate: fromDateTimeLocalValue(editForm.startDate),
           endDate: fromDateTimeLocalValue(editForm.endDate),
           durationEstimate: editForm.durationEstimate.trim() || null,
-          requiredPeople: requiredPeopleValue
-            ? Number(requiredPeopleValue)
+          maxParticipants: maxParticipantsValue
+            ? Number(maxParticipantsValue)
             : null,
           status: editForm.status,
           isHidden: editForm.isHidden,
@@ -587,6 +587,7 @@ export function HomeClient() {
                 editForm={editForm}
                 busyTaskIds={busyTaskIds}
                 pendingUploads={pendingUploads}
+                onParticipantsChanged={() => refreshTasks({ keepLoadingState: true })}
                 onStartEdit={startEditTask}
                 onCancelEdit={() => {
                   setEditingTaskId(null);
@@ -617,6 +618,7 @@ export function HomeClient() {
                 editForm={editForm}
                 busyTaskIds={busyTaskIds}
                 pendingUploads={pendingUploads}
+                onParticipantsChanged={() => refreshTasks({ keepLoadingState: true })}
                 onStartEdit={startEditTask}
                 onCancelEdit={() => {
                   setEditingTaskId(null);

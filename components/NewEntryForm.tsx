@@ -16,7 +16,7 @@ type NewEntryFormProps = {
         startDate: string;
         endDate: string;
         durationEstimate: string;
-        requiredPeople: string;
+        maxParticipants: string;
         status: TaskStatus;
         isHidden: boolean;
         sendEmail: boolean;
@@ -28,7 +28,7 @@ type NewEntryFormProps = {
         startDate: string;
         endDate: string;
         durationEstimate: string;
-        requiredPeople: string;
+        maxParticipants: string;
         status: TaskStatus;
         isHidden: boolean;
         sendEmail: boolean;
@@ -127,11 +127,11 @@ export const NewEntryForm = ({
                     min={1}
                     className={baseFieldClass}
                     placeholder="Benötigte Personen"
-                    value={createForm.requiredPeople}
+                    value={createForm.maxParticipants}
                     onChange={(event) =>
                     setCreateForm((prev) => ({
                         ...prev,
-                        requiredPeople: event.target.value,
+                        maxParticipants: event.target.value,
                     }))
                     }
                 />

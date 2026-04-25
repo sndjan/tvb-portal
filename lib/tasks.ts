@@ -11,7 +11,7 @@ export type Task = {
   startDate: string | null;
   endDate: string | null;
   durationEstimate: string | null;
-  requiredPeople: number | null;
+  maxParticipants: number | null;
   status: TaskStatus;
   isHidden: boolean;
   createdAt: string;
@@ -30,7 +30,7 @@ type SupabaseTaskRow = {
   start_date: string | null;
   end_date: string | null;
   duration_estimate: string | number | null;
-  required_people: number | null;
+  max_participants: number | null;
   status: string | null;
   is_hidden: boolean | null;
   created_at: string | null;
@@ -48,7 +48,7 @@ const MOCK_TASKS: Task[] = [
     startDate: "2026-04-28T08:00:00.000Z",
     endDate: "2026-04-28T12:00:00.000Z",
     durationEstimate: "4 Stunden",
-    requiredPeople: 8,
+    maxParticipants: 8,
     status: "open",
     isHidden: false,
     createdAt: "2026-04-10T08:00:00.000Z",
@@ -61,7 +61,7 @@ const MOCK_TASKS: Task[] = [
     startDate: null,
     endDate: null,
     durationEstimate: "2 Stunden",
-    requiredPeople: 4,
+    maxParticipants: 4,
     status: "open",
     isHidden: false,
     createdAt: "2026-04-12T10:30:00.000Z",
@@ -74,7 +74,7 @@ const MOCK_TASKS: Task[] = [
     startDate: "2026-03-08T09:00:00.000Z",
     endDate: "2026-03-08T11:30:00.000Z",
     durationEstimate: "2.5 Stunden",
-    requiredPeople: 3,
+    maxParticipants: 3,
     status: "done",
     isHidden: false,
     createdAt: "2026-03-01T13:45:00.000Z",
@@ -92,7 +92,7 @@ function mapTaskRow(row: SupabaseTaskRow): Task {
       typeof row.duration_estimate === "number"
         ? `${row.duration_estimate} Stunden`
         : row.duration_estimate,
-    requiredPeople: row.required_people,
+    maxParticipants: row.max_participants,
     status: row.status === "done" ? "done" : "open",
     isHidden: Boolean(row.is_hidden),
     createdAt: row.created_at || new Date(0).toISOString(),
@@ -138,7 +138,7 @@ export async function getTaskFeed(): Promise<TaskFeedResult> {
   const { data, error } = await supabase
     .from("tasks")
     .select(
-      "id, title, description, start_date, end_date, duration_estimate, required_people, status, is_hidden, created_at",
+      "id, title, description, start_date, end_date, duration_estimate, max_participants, status, is_hidden, created_at",
     )
     .order("created_at", { ascending: true });
 
