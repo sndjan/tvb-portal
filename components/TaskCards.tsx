@@ -321,10 +321,15 @@ export const TaskCards = ({
                     <CalendarDays className="size-4" aria-hidden="true" />
                     {formatDateRange(task)}
                   </p>
-                  <p className="flex items-center gap-2 text-muted-foreground">
-                    <Clock3 className="size-4" aria-hidden="true" />
-                    {task.durationEstimate || "Keine Dauer angegeben"}
-                  </p>
+                  {task.durationEstimate !== null &&
+                    task.durationEstimate !== "" && (
+                      <p className="flex items-center gap-2 text-muted-foreground">
+                        <Clock3 className="size-4" aria-hidden="true" />
+                        {task.durationEstimate === "1"
+                          ? "1 Stunde"
+                          : `${task.durationEstimate} Stunden`}
+                      </p>
+                    )}
                   <p className="flex items-center gap-2 text-muted-foreground">
                     <Users className="size-4" aria-hidden="true" />
                     {task.participantCount}
@@ -685,7 +690,7 @@ export const TaskCards = ({
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Anmeldung</DialogTitle>
+            <DialogTitle>An- / Abmeldung</DialogTitle>
             <DialogDescription>
               {dialogTask
                 ? `Melde dich für "${dialogTask.title}" an oder wieder ab.`

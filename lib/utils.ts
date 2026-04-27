@@ -3,7 +3,7 @@ import { twMerge } from "tailwind-merge";
 import { CreateTaskFormState, TaskWithDetails } from "./types";
 
 export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
+  return twMerge(clsx(inputs));
 }
 
 export const baseFieldClass =
@@ -13,8 +13,10 @@ export function getDefaultCreateForm(): CreateTaskFormState {
   return {
     title: "",
     description: "",
-    startDate: "",
-    endDate: "",
+    scheduleType: "range",
+    rangeStartDate: "",
+    rangeEndDate: "",
+    startDateTime: "",
     durationEstimate: "",
     maxParticipants: "",
     status: "open",
@@ -22,7 +24,6 @@ export function getDefaultCreateForm(): CreateTaskFormState {
     sendEmail: false,
   };
 }
-
 
 export function toDateTimeLocalValue(value: string | null): string {
   if (!value) {
@@ -69,14 +70,30 @@ export function formatDateTime(value: string) {
   }
 
   return new Intl.DateTimeFormat("de-DE", {
-    dateStyle: "medium",
-    timeStyle: "short",
+    day: "2-digit",
+    month: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
+}
+
+function formatDateOnly(value: string) {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.valueOf())) {
+    return "Ungueltiges Datum";
+  }
+
+  return new Intl.DateTimeFormat("de-DE", {
+    day: "2-digit",
+    month: "2-digit",
+    timeZone: "UTC",
   }).format(date);
 }
 
 export function formatDateRange(task: TaskWithDetails) {
   if (task.startDate && task.endDate) {
-    return `${formatDateTime(task.startDate)} bis ${formatDateTime(task.endDate)}`;
+    return `${formatDateOnly(task.startDate)} bis ${formatDateOnly(task.endDate)}`;
   }
 
   if (task.startDate) {

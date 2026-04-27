@@ -53,7 +53,7 @@ export const MailingList = ({
           </Button>
         </form>
 
-        <div className="max-h-72 space-y-2 overflow-auto pr-1">
+        <div className="max-h-90 space-y-2 overflow-auto pr-1">
           {emailRecipients.length === 0 && !isLoadingEmailRecipients ? (
             <p className="text-sm text-muted-foreground">
               Noch keine Empfänger hinterlegt.

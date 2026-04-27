@@ -176,12 +176,19 @@ export function useHomeClient() {
 
     try {
       const maxParticipantsValue = createForm.maxParticipants.trim();
+      const isRangeMode = createForm.scheduleType === "range";
+      const startDateInput = isRangeMode
+        ? createForm.rangeStartDate.trim()
+        : createForm.startDateTime.trim();
+      const endDateInput = isRangeMode ? createForm.rangeEndDate.trim() : "";
 
       const payload = {
         title: createForm.title,
         description: createForm.description,
-        startDate: fromDateTimeLocalValue(createForm.startDate),
-        endDate: fromDateTimeLocalValue(createForm.endDate),
+        startDate: isRangeMode
+          ? startDateInput || null
+          : fromDateTimeLocalValue(startDateInput),
+        endDate: isRangeMode ? endDateInput || null : null,
         durationEstimate: createForm.durationEstimate.trim() || null,
         maxParticipants: maxParticipantsValue
           ? Number(maxParticipantsValue)

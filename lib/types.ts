@@ -44,8 +44,10 @@ export type EmailRecipient = {
 export type CreateTaskFormState = {
   title: string;
   description: string;
-  startDate: string;
-  endDate: string;
+  scheduleType: "range" | "start";
+  rangeStartDate: string;
+  rangeEndDate: string;
+  startDateTime: string;
   durationEstimate: string;
   maxParticipants: string;
   status: TaskStatus;
