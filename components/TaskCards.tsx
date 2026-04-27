@@ -5,52 +5,52 @@ import { useEffect, useMemo, useState } from "react";
 import { requestJson } from "@/lib/api";
 import { TaskStatus } from "@/lib/tasks";
 import {
-    Action,
-    BusyTask,
-    EditTaskFormState,
-    PendingUpload,
-    TaskWithDetails,
+  Action,
+  BusyTask,
+  EditTaskFormState,
+  PendingUpload,
+  TaskWithDetails,
 } from "@/lib/types";
 import { baseFieldClass, formatDateRange, toMessage } from "@/lib/utils";
 import {
-    CalendarDays,
-    Clock3,
-    Eye,
-    EyeOff,
-    ImagePlus,
-    ListChecks,
-    Pencil,
-    Save,
-    Trash2,
-    UserPlus,
-    Users,
+  CalendarDays,
+  Clock3,
+  Eye,
+  EyeOff,
+  ImagePlus,
+  ListChecks,
+  Pencil,
+  Save,
+  Trash2,
+  UserPlus,
+  Users,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardFooter,
-    CardHeader,
-    CardTitle,
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
 } from "./ui/card";
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from "./ui/dialog";
 import { Input } from "./ui/input";
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "./ui/select";
 import { Spinner } from "./ui/spinner";
 import { Textarea } from "./ui/textarea";
@@ -339,7 +339,7 @@ export const TaskCards = ({
                   <div className="grid gap-3 rounded-lg border bg-muted/20 p-3">
                     <div>
                       <h3 className="mb-2 text-sm font-medium">
-                        Registrierte Teilnehmer
+                        Angemeldete Teilnehmer
                       </h3>
                       {task.participants && task.participants.length > 0 ? (
                         <ul className="grid gap-1 text-sm">
@@ -739,7 +739,7 @@ export const TaskCards = ({
                 </p>
               ) : isRegistered ? (
                 <p className="text-sm text-muted-foreground">
-                  Du bist bereits registriert.
+                  Du bist bereits angemeldet.
                 </p>
               ) : dialogTask.maxParticipants !== null &&
                 dialogTask.participantCount >= dialogTask.maxParticipants ? (
@@ -748,7 +748,7 @@ export const TaskCards = ({
                 </p>
               ) : (
                 <p className="text-sm text-muted-foreground">
-                  Du bist aktuell nicht registriert.
+                  Du bist aktuell nicht angemeldet.
                 </p>
               )}
             </div>
@@ -787,7 +787,7 @@ export const TaskCards = ({
                     }
                   >
                     {isRegistrationSubmitting ? <Spinner /> : null}
-                    Registrieren
+                    Anmelden
                   </Button>
                 )}
               </>

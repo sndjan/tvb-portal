@@ -2,6 +2,7 @@ import "server-only";
 
 import { randomUUID } from "node:crypto";
 
+import { Resend } from "resend";
 import { z } from "zod";
 
 import { HttpError } from "@/lib/backend/errors";
@@ -9,6 +10,7 @@ import {
   getSupabaseServiceClientOrThrow,
   getTaskImagesBucketName,
 } from "@/lib/backend/supabase";
+import { formatDateTime } from "../utils";
 
 export type TaskStatus = "open" | "done";
 
@@ -936,7 +938,10 @@ export async function addTaskParticipant(
     throw new HttpError(404, "Task nicht gefunden", "task_not_found");
   }
 
-  if (task.maxParticipants !== null && task.participantCount >= task.maxParticipants) {
+  if (
+    task.maxParticipants !== null &&
+    task.participantCount >= task.maxParticipants
+  ) {
     throw new HttpError(
       409,
       "Die maximale Teilnehmerzahl ist bereits erreicht",
@@ -1328,70 +1333,84 @@ export async function notifyTaskCreated(
     };
   }
 
-  const webhookUrl = process.env.EMAIL_WEBHOOK_URL?.trim();
+  const resendApiKey = process.env.RESEND_API_KEY?.trim();
 
-  if (!webhookUrl) {
+  if (!resendApiKey) {
     return {
       attempted: false,
       sent: false,
       recipientCount: recipients.length,
-      message: "EMAIL_WEBHOOK_URL ist nicht konfiguriert",
+      message: "RESEND_API_KEY ist nicht konfiguriert",
     };
   }
 
   const siteUrl =
+    process.env.MAIL_URL?.trim() ||
     process.env.NEXT_PUBLIC_SITE_URL?.trim() ||
     process.env.SITE_URL?.trim() ||
     "";
 
-  const payload = {
-    recipients: recipients.map((recipient) => recipient.email),
-    task: {
-      id: task.id,
-      title: task.title,
-      description: task.description,
-      startDate: task.startDate,
-      endDate: task.endDate,
-      status: task.status,
-    },
-    link: siteUrl ? `${siteUrl.replace(/\/$/, "")}/` : null,
-  };
+  const resend = new Resend(resendApiKey);
+  const baseUrl = siteUrl.replace(/\/$/, "");
+  const taskUrl = baseUrl ? `${baseUrl}/` : null;
+  const subject = `Neuer Arbeitseinsatz: ${task.title}`;
 
-  const headers: Record<string, string> = {
-    "content-type": "application/json",
-  };
+  const startDate = task.startDate ? formatDateTime(task.startDate) : "n/a";
+  const endDate = task.endDate ? formatDateTime(task.endDate) : "n/a";
 
-  const webhookApiKey = process.env.EMAIL_WEBHOOK_API_KEY?.trim();
+  const taskDetails = [
+    ["Titel", task.title],
+    ["Beschreibung", task.description],
+    ["Start", startDate],
+    ["Ende", endDate],
+    ["Dauer", task.durationEstimate],
+    ["Max. Teilnehmer", task.maxParticipants?.toString() ?? null],
+  ].filter((entry): entry is [string, string] => Boolean(entry[1]));
 
-  if (webhookApiKey) {
-    headers["x-api-key"] = webhookApiKey;
-  }
+  const htmlRows = taskDetails
+    .map(
+      ([label, value]) =>
+        `<tr><td style="padding:4px 12px 4px 0;font-weight:600;vertical-align:top;">${escapeHtml(label)}</td><td style="padding:4px 0;">${escapeHtml(value)}</td></tr>`,
+    )
+    .join("");
 
-  let response: Response;
+  const html = `
+    <div style="font-family:Arial,sans-serif;line-height:1.6;color:#111827;">
+      <h1 style="font-size:20px;margin:0 0 16px;">Neuer Arbeitseinsatz</h1>
+      <p style="margin:0 0 16px;">Ein neuer Einsatz wurde erstellt. Die Details:</p>
+      <table style="border-collapse:collapse;margin:0 0 16px;">${htmlRows}</table>
+      ${
+        taskUrl
+          ? `<p style="margin:0 0 8px;"><a href="${escapeHtml(taskUrl)}" style="color:#2563eb;">Zur Seite</a></p>`
+          : ""
+      }
+    </div>
+  `;
+
+  const textLines = [
+    "Neuer Arbeitseinsatz",
+    "",
+    ...taskDetails.map(([label, value]) => `${label}: ${value}`),
+    ...(taskUrl ? ["", `Zur Seite: ${taskUrl}`] : []),
+  ];
 
   try {
-    response = await fetch(webhookUrl, {
-      method: "POST",
-      headers,
-      body: JSON.stringify(payload),
-      cache: "no-store",
-    });
-  } catch {
-    throw new HttpError(
-      502,
-      "E-Mail Dienst konnte nicht erreicht werden",
-      "email_service_unreachable",
+    await Promise.all(
+      recipients.map((recipient) =>
+        resend.emails.send({
+          from: "onboarding@resend.dev",
+          to: recipient.email,
+          subject,
+          html,
+          text: textLines.join("\n"),
+        }),
+      ),
     );
-  }
-
-  if (!response.ok) {
+  } catch {
     throw new HttpError(
       502,
       "E-Mail Versand fehlgeschlagen",
       "email_send_failed",
-      {
-        status: response.status,
-      },
     );
   }
 
@@ -1399,8 +1418,25 @@ export async function notifyTaskCreated(
     attempted: true,
     sent: true,
     recipientCount: recipients.length,
-    message: "E-Mail Versand wurde gestartet",
+    message: `E-Mail an ${recipients.length} Empfänger gesendet`,
   };
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function formatDateOnly(value: string | null): string | null {
+  if (!value) {
+    return null;
+  }
+
+  return value.split("T")[0] ?? value;
 }
 
 function escapeIcsText(value: string): string {

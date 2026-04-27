@@ -15,7 +15,7 @@ type MailingListProps = {
   setEmailInput: (email: string) => void;
   emailRecipients: { id: string; email: string }[];
   isLoadingEmailRecipients: boolean;
-  handleAddEmailRecipient: (event: React.FormEvent<HTMLFormElement>) => void;
+  handleAddEmailRecipient: (event: React.SubmitEvent<HTMLFormElement>) => void;
   handleRemoveEmailRecipient: (id: string) => void;
 };
 
@@ -53,7 +53,7 @@ export const MailingList = ({
           </Button>
         </form>
 
-        <div className="max-h-48 space-y-2 overflow-auto pr-1">
+        <div className="max-h-72 space-y-2 overflow-auto pr-1">
           {emailRecipients.length === 0 && !isLoadingEmailRecipients ? (
             <p className="text-sm text-muted-foreground">
               Noch keine Empfänger hinterlegt.
