@@ -55,6 +55,8 @@ import { Spinner } from "./ui/spinner";
 import { Textarea } from "./ui/textarea";
 
 const STORAGE_KEY = "tvb-registration-profile";
+const TECHNICAL_CONTACT_NAME = process.env.NEXT_PUBLIC_TECHNICAL_CONTACT_NAME;
+const TECHNICAL_CONTACT_EMAIL = process.env.NEXT_PUBLIC_TECHNICAL_CONTACT_EMAIL;
 
 function getStoredProfile(): { firstName: string; lastName: string } | null {
   if (typeof window === "undefined") {
@@ -135,6 +137,7 @@ export const TaskCards = ({
   const [isRegistrationSubmitting, setIsRegistrationSubmitting] =
     useState(false);
   const [isRegistered, setIsRegistered] = useState(false);
+  const [showRegistrationSuccess, setShowRegistrationSuccess] = useState(false);
 
   const dialogTask = useMemo(
     () => tasks.find((task) => task.id === dialogTaskId) ?? null,
@@ -213,6 +216,7 @@ export const TaskCards = ({
 
       persistProfile(normalizedFirstName, normalizedLastName);
       setIsRegistered(true);
+      setShowRegistrationSuccess(true);
       toast.success("Erfolgreich angemeldet.");
       await onParticipantsChanged?.();
     } catch (error) {
@@ -244,6 +248,7 @@ export const TaskCards = ({
 
       persistProfile(normalizedFirstName, normalizedLastName);
       setIsRegistered(false);
+      setShowRegistrationSuccess(false);
       toast.success("Abmeldung erfolgreich.");
       await onParticipantsChanged?.();
     } catch (error) {
@@ -266,6 +271,12 @@ export const TaskCards = ({
       window.clearTimeout(timeoutId);
     };
   }, [dialogTaskId, firstName, lastName]);
+
+  function closeDialog() {
+    setDialogTaskId(null);
+    setIsRegistered(false);
+    setShowRegistrationSuccess(false);
+  }
 
   return (
     <>
@@ -693,122 +704,167 @@ export const TaskCards = ({
         open={Boolean(dialogTaskId)}
         onOpenChange={(open) => {
           if (!open) {
-            setDialogTaskId(null);
-            setIsRegistered(false);
+            closeDialog();
           }
         }}
       >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>An- / Abmeldung</DialogTitle>
-            <DialogDescription>
-              {dialogTask
-                ? `Melde dich für "${dialogTask.title}" an oder wieder ab.`
-                : ""}
-            </DialogDescription>
-          </DialogHeader>
+        {dialogTask ? (
+          showRegistrationSuccess ? (
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Anmeldung erfolgreich</DialogTitle>
+                <DialogDescription>
+                  Deine Anmeldung für &quot;{dialogTask.title}&quot; wurde
+                  gespeichert.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4">
+                <div className="grid gap-3 rounded-lg border bg-muted/20 p-4 text-sm text-muted-foreground">
+                  <p className="font-medium text-foreground">
+                    Was du jetzt wissen solltest
+                  </p>
+                  <ul className="grid gap-2">
+                    <li>Du kannst diese Anmeldung jederzeit wieder ändern.</li>
+                    <li>
+                      Falls sich deine Daten ändern, bitte den Namen im Dialog
+                      anpassen.
+                    </li>
+                    <li>
+                      Bei Fragen oder Details melde dich bitte beim TV
+                      Bellenberg Vorstand.
+                    </li>
+                  </ul>
+                </div>
 
-          {dialogTask ? (
-            <div className="grid gap-3">
-              <p className="text-sm text-muted-foreground">
-                Aktuelle Anmeldungen: {dialogTask.participantCount}
-                {dialogTask.maxParticipants !== null
-                  ? ` / ${dialogTask.maxParticipants}`
-                  : ""}
-              </p>
-
-              <Input
-                className={baseFieldClass}
-                placeholder="Vorname"
-                value={firstName}
-                onChange={(event) => setFirstName(event.target.value)}
-              />
-              <Input
-                className={baseFieldClass}
-                placeholder="Nachname"
-                value={lastName}
-                onChange={(event) => setLastName(event.target.value)}
-              />
-
-              <label className="inline-flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={rememberMe}
-                  onChange={(event) => {
-                    const nextRemember = event.target.checked;
-                    setRememberMe(nextRemember);
-
-                    if (!nextRemember) {
-                      localStorage.removeItem(STORAGE_KEY);
-                    } else {
-                      persistProfile(firstName, lastName, true);
-                    }
-                  }}
-                />
-                Namen merken
-              </label>
-
-              {isCheckingRegistration ? (
-                <p className="text-sm text-muted-foreground">
-                  Status wird geprüft...
-                </p>
-              ) : isRegistered ? (
-                <p className="text-sm text-muted-foreground">
-                  Du bist bereits angemeldet.
-                </p>
-              ) : dialogTask.maxParticipants !== null &&
-                dialogTask.participantCount >= dialogTask.maxParticipants ? (
-                <p className="text-sm text-muted-foreground">
-                  Leider ist die maximale Teilnehmerzahl bereits erreicht.
-                </p>
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  Du bist aktuell nicht angemeldet.
-                </p>
-              )}
-            </div>
-          ) : null}
-
-          <DialogFooter>
-            {dialogTask ? (
-              <>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setDialogTaskId(null)}
-                >
-                  Schließen
+                <div className="rounded-lg border bg-card p-4">
+                  <p className="text-xs font-medium tracking-wider text-muted-foreground uppercase">
+                    Kontakt für Rückfragen
+                  </p>
+                  <p className="mt-1 text-sm font-medium text-foreground">
+                    Technische Leitung - {TECHNICAL_CONTACT_NAME}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Wenn du weitere Infos brauchst, wende dich bitte an{" "}
+                    {TECHNICAL_CONTACT_NAME} oder per E-Mail an{" "}
+                    <a
+                      href={`mailto:${TECHNICAL_CONTACT_EMAIL}`}
+                      className="underline underline-offset-4"
+                    >
+                      {TECHNICAL_CONTACT_EMAIL}
+                    </a>
+                  </p>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button type="button" onClick={closeDialog}>
+                  Fertig
                 </Button>
+              </DialogFooter>
+            </DialogContent>
+          ) : (
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>An- / Abmeldung</DialogTitle>
+                <DialogDescription>
+                  {dialogTask
+                    ? `Melde dich für "${dialogTask.title}" an oder wieder ab.`
+                    : ""}
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-3">
+                <p className="text-sm text-muted-foreground">
+                  Aktuelle Anmeldungen: {dialogTask.participantCount}
+                  {dialogTask.maxParticipants !== null
+                    ? ` / ${dialogTask.maxParticipants}`
+                    : ""}
+                </p>
 
-                {isRegistered ? (
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    onClick={() => void handleUnregister(dialogTask.id)}
-                    disabled={isRegistrationSubmitting}
-                  >
-                    {isRegistrationSubmitting ? <Spinner /> : null}
-                    Abmelden
-                  </Button>
+                <Input
+                  className={baseFieldClass}
+                  placeholder="Vorname"
+                  value={firstName}
+                  onChange={(event) => setFirstName(event.target.value)}
+                />
+                <Input
+                  className={baseFieldClass}
+                  placeholder="Nachname"
+                  value={lastName}
+                  onChange={(event) => setLastName(event.target.value)}
+                />
+
+                <label className="inline-flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(event) => {
+                      const nextRemember = event.target.checked;
+                      setRememberMe(nextRemember);
+
+                      if (!nextRemember) {
+                        localStorage.removeItem(STORAGE_KEY);
+                      } else {
+                        persistProfile(firstName, lastName, true);
+                      }
+                    }}
+                  />
+                  Namen merken
+                </label>
+
+                {isCheckingRegistration ? (
+                  <p className="text-sm text-muted-foreground">
+                    Status wird geprüft...
+                  </p>
+                ) : isRegistered ? (
+                  <p className="text-sm text-muted-foreground">
+                    Du bist bereits angemeldet.
+                  </p>
+                ) : dialogTask.maxParticipants !== null &&
+                  dialogTask.participantCount >= dialogTask.maxParticipants ? (
+                  <p className="text-sm text-muted-foreground">
+                    Leider ist die maximale Teilnehmerzahl bereits erreicht.
+                  </p>
                 ) : (
-                  <Button
-                    type="button"
-                    onClick={() => void handleRegister(dialogTask.id)}
-                    disabled={
-                      isRegistrationSubmitting ||
-                      (dialogTask.maxParticipants !== null &&
-                        dialogTask.participantCount >=
-                          dialogTask.maxParticipants)
-                    }
-                  >
-                    {isRegistrationSubmitting ? <Spinner /> : null}
-                    Anmelden
-                  </Button>
+                  <p className="text-sm text-muted-foreground">
+                    Du bist aktuell nicht angemeldet.
+                  </p>
                 )}
-              </>
-            ) : null}
-          </DialogFooter>
-        </DialogContent>
+              </div>
+              <DialogFooter>
+                <>
+                  <Button type="button" variant="outline" onClick={closeDialog}>
+                    Schließen
+                  </Button>
+
+                  {isRegistered ? (
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      onClick={() => void handleUnregister(dialogTask.id)}
+                      disabled={isRegistrationSubmitting}
+                    >
+                      {isRegistrationSubmitting ? <Spinner /> : null}
+                      Abmelden
+                    </Button>
+                  ) : (
+                    <Button
+                      type="button"
+                      onClick={() => void handleRegister(dialogTask.id)}
+                      disabled={
+                        isRegistrationSubmitting ||
+                        (dialogTask.maxParticipants !== null &&
+                          dialogTask.participantCount >=
+                            dialogTask.maxParticipants)
+                      }
+                    >
+                      {isRegistrationSubmitting ? <Spinner /> : null}
+                      Anmelden
+                    </Button>
+                  )}
+                </>
+              </DialogFooter>
+            </DialogContent>
+          )
+        ) : null}
       </Dialog>
     </>
   );

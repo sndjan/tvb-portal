@@ -145,12 +145,12 @@ export const NewEntryForm = ({
             </label>
           )}
 
-          <div className="grid gap-3 sm:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-2">
             <Input
               type="number"
               step="0.5"
               className={baseFieldClass}
-              placeholder="Dauer in Stunden"
+              placeholder="Dauer in Stunden (optional)"
               value={createForm.durationEstimate}
               onChange={(event) =>
                 setCreateForm((prev) => ({
@@ -163,7 +163,7 @@ export const NewEntryForm = ({
               type="number"
               min={1}
               className={baseFieldClass}
-              placeholder="Max. benötigte Personen"
+              placeholder="Max. benötigte Personen (optional)"
               value={createForm.maxParticipants}
               onChange={(event) =>
                 setCreateForm((prev) => ({
@@ -185,7 +185,7 @@ export const NewEntryForm = ({
                   }))
                 }
               />
-              Versteckt (nur Admin)
+              Versteckt (nur für Admin sichtbar)
             </label>
 
             <label className="inline-flex items-center gap-2">
@@ -198,7 +198,7 @@ export const NewEntryForm = ({
                   }))
                 }
               />
-              E-Mail senden
+              E-Mail an Verteilerliste senden
             </label>
           </div>
 
