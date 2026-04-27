@@ -1,4 +1,3 @@
-import { TaskStatus } from "@/lib/tasks";
 import { CreateTaskFormState } from "@/lib/types";
 import { baseFieldClass } from "@/lib/utils";
 import { Plus } from "lucide-react";

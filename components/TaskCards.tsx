@@ -17,7 +17,6 @@ import {
   Clock3,
   Eye,
   EyeOff,
-  ImagePlus,
   ListChecks,
   Pencil,
   Save,
@@ -114,7 +113,7 @@ export const TaskCards = ({
   editingTaskId,
   editForm,
   busyTaskIds,
-  pendingUploads,
+  // pendingUploads,
   onStartEdit,
   onCancelEdit,
   onChangeEditForm,
@@ -122,9 +121,9 @@ export const TaskCards = ({
   onDeleteTask,
   onToggleStatus,
   onToggleVisibility,
-  onSelectUpload,
-  onUploadImages,
-  onDeleteImage,
+  // onSelectUpload,
+  // onUploadImages,
+  // onDeleteImage,
   onParticipantsChanged,
 }: TaskCardsProps) => {
   const [storedProfile] = useState(getStoredProfile);
@@ -274,11 +273,12 @@ export const TaskCards = ({
         {tasks.map((task) => {
           const taskBusy = busyTaskIds.find((busy) => busy.id === task.id);
           const isBusy = Boolean(taskBusy?.busy);
+          // const firstImage = task.images[0];
 
           const isDeleting =
             isBusy && taskBusy?.busyAction === Action.DeleteTask;
-          const isUploading =
-            isBusy && taskBusy?.busyAction === Action.UploadImages;
+          // const isUploading =
+          //   isBusy && taskBusy?.busyAction === Action.UploadImages;
           const isTogglingStatus =
             isBusy && taskBusy?.busyAction === Action.ToggleStatus;
           const isTogglingVisibility =
@@ -287,7 +287,7 @@ export const TaskCards = ({
             isBusy && taskBusy?.busyAction === Action.SaveEdit;
 
           const isEditing = editingTaskId === task.id && Boolean(editForm);
-          const upload = pendingUploads[task.id];
+          // const upload = pendingUploads[task.id];
 
           return (
             <Card key={task.id} className="border-l-4 border-l-primary/60">
@@ -316,7 +316,17 @@ export const TaskCards = ({
               </CardHeader>
 
               <CardContent className="grid gap-3 text-sm">
-                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                {/* {firstImage ? (
+                  <div className="overflow-hidden rounded-lg border bg-muted/10">
+                    <img
+                      src={firstImage.url}
+                      alt={`Vorschaubild zu ${task.title}`}
+                      className="h-44 w-full object-cover sm:h-56"
+                    />
+                  </div>
+                ) : null}*/}
+
+                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4 pb-4">
                   <p className="flex items-center gap-2 text-muted-foreground">
                     <CalendarDays className="size-4" aria-hidden="true" />
                     {formatDateRange(task)}
@@ -364,7 +374,7 @@ export const TaskCards = ({
                       )}
                     </div>
 
-                    <div>
+                    {/* <div>
                       <h3 className="mb-2 text-sm font-medium">Bilder</h3>
                       {task.images.length > 0 ? (
                         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
@@ -443,7 +453,7 @@ export const TaskCards = ({
                           Bilder hochladen
                         </Button>
                       </div>
-                    </div>
+                    </div> */}
                   </div>
                 ) : null}
 
