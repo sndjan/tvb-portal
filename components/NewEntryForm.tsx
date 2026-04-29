@@ -147,7 +147,7 @@ export const NewEntryForm = ({
 
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="grid gap-1 text-xs text-muted-foreground">
-              Max. benötigte Personen (optional)
+              Geschätzte Dauer (optional)
               <Input
                 type="number"
                 step="0.5"
