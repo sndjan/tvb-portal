@@ -281,53 +281,60 @@ export const TaskCards = ({
   return (
     <>
       <div className="grid gap-4">
-        {tasks.map((task) => {
-          const taskBusy = busyTaskIds.find((busy) => busy.id === task.id);
-          const isBusy = Boolean(taskBusy?.busy);
-          // const firstImage = task.images[0];
+        {tasks
+          .sort(
+            (a, b) =>
+              new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+          )
+          .map((task) => {
+            const taskBusy = busyTaskIds.find((busy) => busy.id === task.id);
+            const isBusy = Boolean(taskBusy?.busy);
+            // const firstImage = task.images[0];
 
-          const isDeleting =
-            isBusy && taskBusy?.busyAction === Action.DeleteTask;
-          // const isUploading =
-          //   isBusy && taskBusy?.busyAction === Action.UploadImages;
-          const isTogglingStatus =
-            isBusy && taskBusy?.busyAction === Action.ToggleStatus;
-          const isTogglingVisibility =
-            isBusy && taskBusy?.busyAction === Action.ToggleVisibility;
-          const isSavingEdit =
-            isBusy && taskBusy?.busyAction === Action.SaveEdit;
+            const isDeleting =
+              isBusy && taskBusy?.busyAction === Action.DeleteTask;
+            // const isUploading =
+            //   isBusy && taskBusy?.busyAction === Action.UploadImages;
+            const isTogglingStatus =
+              isBusy && taskBusy?.busyAction === Action.ToggleStatus;
+            const isTogglingVisibility =
+              isBusy && taskBusy?.busyAction === Action.ToggleVisibility;
+            const isSavingEdit =
+              isBusy && taskBusy?.busyAction === Action.SaveEdit;
 
-          const isEditing = editingTaskId === task.id && Boolean(editForm);
-          // const upload = pendingUploads[task.id];
+            const isEditing = editingTaskId === task.id && Boolean(editForm);
+            // const upload = pendingUploads[task.id];
 
-          return (
-            <Card key={task.id} className="border-l-4 border-l-primary/60">
-              <CardHeader className="gap-2">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="space-y-1">
-                    <CardTitle className="text-base sm:text-lg">
-                      {task.title}
-                    </CardTitle>
-                    <CardDescription>{task.description}</CardDescription>
-                  </div>
-                  <div className="flex flex-wrap items-center justify-end gap-1.5">
-                    <Badge
-                      variant={task.status === "done" ? "secondary" : "default"}
-                    >
-                      {task.status === "done" ? "Erledigt" : "Offen"}
-                    </Badge>
-                    {task.isHidden ? (
-                      <Badge variant="outline" className="gap-1">
-                        <EyeOff className="size-3" aria-hidden="true" />
-                        Versteckt
+            return (
+              <Card key={task.id} className="border-l-4 border-l-primary/60">
+                <CardHeader className="gap-2">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="space-y-1">
+                      <CardTitle className="text-base sm:text-lg">
+                        {task.title}
+                      </CardTitle>
+                      <CardDescription>{task.description}</CardDescription>
+                    </div>
+                    <div className="flex flex-wrap items-center justify-end gap-1.5">
+                      <Badge
+                        variant={
+                          task.status === "done" ? "secondary" : "default"
+                        }
+                      >
+                        {task.status === "done" ? "Erledigt" : "Offen"}
                       </Badge>
-                    ) : null}
+                      {task.isHidden ? (
+                        <Badge variant="outline" className="gap-1">
+                          <EyeOff className="size-3" aria-hidden="true" />
+                          Versteckt
+                        </Badge>
+                      ) : null}
+                    </div>
                   </div>
-                </div>
-              </CardHeader>
+                </CardHeader>
 
-              <CardContent className="grid gap-3 text-sm">
-                {/* {firstImage ? (
+                <CardContent className="grid gap-3 text-sm">
+                  {/* {firstImage ? (
                   <div className="overflow-hidden rounded-lg border bg-muted/10">
                     <img
                       src={firstImage.url}
@@ -337,55 +344,55 @@ export const TaskCards = ({
                   </div>
                 ) : null}*/}
 
-                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4 pb-4">
-                  <p className="flex items-center gap-2 text-muted-foreground">
-                    <CalendarDays className="size-4" aria-hidden="true" />
-                    {formatDateRange(task)}
-                  </p>
-                  {task.durationEstimate !== null &&
-                    task.durationEstimate !== "" && (
-                      <p className="flex items-center gap-2 text-muted-foreground">
-                        <Clock3 className="size-4" aria-hidden="true" />
-                        {task.durationEstimate === "1"
-                          ? "1 Stunde"
-                          : `${task.durationEstimate} Stunden`}
-                      </p>
-                    )}
-                  <p className="flex items-center gap-2 text-muted-foreground">
-                    <Users className="size-4" aria-hidden="true" />
-                    {task.participantCount}
-                    {task.maxParticipants !== null
-                      ? ` von ${task.maxParticipants}`
-                      : ""}{" "}
-                    Anmeldung{task.maxParticipants === 1 ? "" : "en"}
-                  </p>
-                </div>
-
-                {isAdmin ? (
-                  <div className="grid gap-3 rounded-lg border bg-muted/20 p-3">
-                    <div>
-                      <h3 className="mb-2 text-sm font-medium">
-                        Angemeldete Teilnehmer
-                      </h3>
-                      {task.participants && task.participants.length > 0 ? (
-                        <ul className="grid gap-1 text-sm">
-                          {task.participants.map((participant) => (
-                            <li
-                              key={participant.id}
-                              className="rounded-md border px-2 py-1"
-                            >
-                              {participant.firstName} {participant.lastName}
-                            </li>
-                          ))}
-                        </ul>
-                      ) : (
-                        <p className="text-sm text-muted-foreground">
-                          Keine Teilnehmer vorhanden.
+                  <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4 pb-4">
+                    <p className="flex items-center gap-2 text-muted-foreground">
+                      <CalendarDays className="size-4" aria-hidden="true" />
+                      {formatDateRange(task)}
+                    </p>
+                    {task.durationEstimate !== null &&
+                      task.durationEstimate !== "" && (
+                        <p className="flex items-center gap-2 text-muted-foreground">
+                          <Clock3 className="size-4" aria-hidden="true" />
+                          {task.durationEstimate === "1"
+                            ? "1 Stunde"
+                            : `${task.durationEstimate} Stunden`}
                         </p>
                       )}
-                    </div>
+                    <p className="flex items-center gap-2 text-muted-foreground">
+                      <Users className="size-4" aria-hidden="true" />
+                      {task.participantCount}
+                      {task.maxParticipants !== null
+                        ? ` von ${task.maxParticipants}`
+                        : ""}{" "}
+                      Anmeldung{task.maxParticipants === 1 ? "" : "en"}
+                    </p>
+                  </div>
 
-                    {/* <div>
+                  {isAdmin ? (
+                    <div className="grid gap-3 rounded-lg border bg-muted/20 p-3">
+                      <div>
+                        <h3 className="mb-2 text-sm font-medium">
+                          Angemeldete Teilnehmer
+                        </h3>
+                        {task.participants && task.participants.length > 0 ? (
+                          <ul className="grid gap-1 text-sm">
+                            {task.participants.map((participant) => (
+                              <li
+                                key={participant.id}
+                                className="rounded-md border px-2 py-1"
+                              >
+                                {participant.firstName} {participant.lastName}
+                              </li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <p className="text-sm text-muted-foreground">
+                            Keine Teilnehmer vorhanden.
+                          </p>
+                        )}
+                      </div>
+
+                      {/* <div>
                       <h3 className="mb-2 text-sm font-medium">Bilder</h3>
                       {task.images.length > 0 ? (
                         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
@@ -465,239 +472,241 @@ export const TaskCards = ({
                         </Button>
                       </div>
                     </div> */}
-                  </div>
-                ) : null}
+                    </div>
+                  ) : null}
 
-                {!isAdmin && !task.isHidden && task.status !== "done" ? (
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    onClick={async () => {
-                      setDialogTaskId(task.id);
-                      await checkRegistration(task.id, firstName, lastName);
-                    }}
-                  >
-                    <UserPlus className="size-4" aria-hidden="true" />
-                    An- / Abmelden
-                  </Button>
-                ) : null}
+                  {!isAdmin && !task.isHidden && task.status !== "done" ? (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={async () => {
+                        setDialogTaskId(task.id);
+                        await checkRegistration(task.id, firstName, lastName);
+                      }}
+                    >
+                      <UserPlus className="size-4" aria-hidden="true" />
+                      An- / Abmelden
+                    </Button>
+                  ) : null}
 
-                {isAdmin && isEditing && editForm ? (
-                  <div className="grid gap-3 rounded-lg border bg-muted/20 p-3">
-                    <h3 className="text-sm font-medium">Einsatz bearbeiten</h3>
-                    <Input
-                      className={baseFieldClass}
-                      value={editForm.title}
-                      onChange={(event) =>
-                        onChangeEditForm({
-                          ...editForm,
-                          title: event.target.value,
-                        })
-                      }
-                    />
-                    <Textarea
-                      className={`${baseFieldClass} min-h-24`}
-                      value={editForm.description}
-                      onChange={(event) =>
-                        onChangeEditForm({
-                          ...editForm,
-                          description: event.target.value,
-                        })
-                      }
-                    />
+                  {isAdmin && isEditing && editForm ? (
+                    <div className="grid gap-3 rounded-lg border bg-muted/20 p-3">
+                      <h3 className="text-sm font-medium">
+                        Einsatz bearbeiten
+                      </h3>
+                      <Input
+                        className={baseFieldClass}
+                        value={editForm.title}
+                        onChange={(event) =>
+                          onChangeEditForm({
+                            ...editForm,
+                            title: event.target.value,
+                          })
+                        }
+                      />
+                      <Textarea
+                        className={`${baseFieldClass} min-h-24`}
+                        value={editForm.description}
+                        onChange={(event) =>
+                          onChangeEditForm({
+                            ...editForm,
+                            description: event.target.value,
+                          })
+                        }
+                      />
 
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      <label className="grid gap-1 text-xs text-muted-foreground">
-                        Startdatum
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <label className="grid gap-1 text-xs text-muted-foreground">
+                          Startdatum
+                          <Input
+                            type="datetime-local"
+                            className={baseFieldClass}
+                            value={editForm.startDate}
+                            onChange={(event) =>
+                              onChangeEditForm({
+                                ...editForm,
+                                startDate: event.target.value,
+                              })
+                            }
+                          />
+                        </label>
+                        <label className="grid gap-1 text-xs text-muted-foreground">
+                          Enddatum
+                          <Input
+                            type="datetime-local"
+                            className={baseFieldClass}
+                            value={editForm.endDate}
+                            onChange={(event) =>
+                              onChangeEditForm({
+                                ...editForm,
+                                endDate: event.target.value,
+                              })
+                            }
+                          />
+                        </label>
+                      </div>
+
+                      <div className="grid gap-3 sm:grid-cols-3">
                         <Input
-                          type="datetime-local"
                           className={baseFieldClass}
-                          value={editForm.startDate}
+                          placeholder="Dauer"
+                          value={editForm.durationEstimate}
                           onChange={(event) =>
                             onChangeEditForm({
                               ...editForm,
-                              startDate: event.target.value,
+                              durationEstimate: event.target.value,
                             })
                           }
                         />
-                      </label>
-                      <label className="grid gap-1 text-xs text-muted-foreground">
-                        Enddatum
                         <Input
-                          type="datetime-local"
+                          type="number"
+                          min={1}
                           className={baseFieldClass}
-                          value={editForm.endDate}
+                          placeholder="Maximale Teilnehmer"
+                          value={editForm.maxParticipants}
                           onChange={(event) =>
                             onChangeEditForm({
                               ...editForm,
-                              endDate: event.target.value,
+                              maxParticipants: event.target.value,
                             })
                           }
                         />
+                        <Select
+                          value={editForm.status}
+                          onValueChange={(event) =>
+                            onChangeEditForm({
+                              ...editForm,
+                              status: event as TaskStatus,
+                            })
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Status auswählen" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="open">Offen</SelectItem>
+                            <SelectItem value="done">Erledigt</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <label className="inline-flex items-center gap-2 text-sm">
+                        <input
+                          type="checkbox"
+                          checked={editForm.isHidden}
+                          onChange={(event) =>
+                            onChangeEditForm({
+                              ...editForm,
+                              isHidden: event.target.checked,
+                            })
+                          }
+                        />
+                        Versteckt (nur Admin)
                       </label>
-                    </div>
 
-                    <div className="grid gap-3 sm:grid-cols-3">
-                      <Input
-                        className={baseFieldClass}
-                        placeholder="Dauer"
-                        value={editForm.durationEstimate}
-                        onChange={(event) =>
-                          onChangeEditForm({
-                            ...editForm,
-                            durationEstimate: event.target.value,
-                          })
-                        }
-                      />
-                      <Input
-                        type="number"
-                        min={1}
-                        className={baseFieldClass}
-                        placeholder="Maximale Teilnehmer"
-                        value={editForm.maxParticipants}
-                        onChange={(event) =>
-                          onChangeEditForm({
-                            ...editForm,
-                            maxParticipants: event.target.value,
-                          })
-                        }
-                      />
-                      <Select
-                        value={editForm.status}
-                        onValueChange={(event) =>
-                          onChangeEditForm({
-                            ...editForm,
-                            status: event as TaskStatus,
-                          })
-                        }
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Status auswählen" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="open">Offen</SelectItem>
-                          <SelectItem value="done">Erledigt</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <div className="flex gap-2">
+                        <Button
+                          type="button"
+                          onClick={() => onSaveEdit(task.id)}
+                          disabled={isBusy}
+                        >
+                          {isSavingEdit ? (
+                            <Spinner />
+                          ) : (
+                            <Save className="size-4" aria-hidden="true" />
+                          )}
+                          Speichern
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          onClick={onCancelEdit}
+                        >
+                          Abbrechen
+                        </Button>
+                      </div>
                     </div>
+                  ) : null}
+                </CardContent>
 
-                    <label className="inline-flex items-center gap-2 text-sm">
-                      <input
-                        type="checkbox"
-                        checked={editForm.isHidden}
-                        onChange={(event) =>
-                          onChangeEditForm({
-                            ...editForm,
-                            isHidden: event.target.checked,
-                          })
-                        }
-                      />
-                      Versteckt (nur Admin)
-                    </label>
-
-                    <div className="flex gap-2">
-                      <Button
-                        type="button"
-                        onClick={() => onSaveEdit(task.id)}
-                        disabled={isBusy}
-                      >
-                        {isSavingEdit ? (
-                          <Spinner />
-                        ) : (
-                          <Save className="size-4" aria-hidden="true" />
-                        )}
-                        Speichern
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        onClick={onCancelEdit}
-                      >
-                        Abbrechen
-                      </Button>
-                    </div>
-                  </div>
+                {isAdmin ? (
+                  <CardFooter className="flex flex-wrap gap-2 border-t">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => onToggleStatus(task)}
+                      disabled={isBusy}
+                    >
+                      {isTogglingStatus ? (
+                        <Spinner />
+                      ) : (
+                        <ListChecks className="size-4" aria-hidden="true" />
+                      )}
+                      Status:{" "}
+                      {task.status === "open" ? "Auf Erledigt" : "Auf Offen"}
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => onToggleVisibility(task)}
+                      disabled={isBusy}
+                    >
+                      {task.isHidden ? (
+                        <>
+                          {isTogglingVisibility ? (
+                            <Spinner />
+                          ) : (
+                            <Eye className="size-4" aria-hidden="true" />
+                          )}
+                          Sichtbar machen
+                        </>
+                      ) : (
+                        <>
+                          {isTogglingVisibility ? (
+                            <Spinner />
+                          ) : (
+                            <EyeOff className="size-4" aria-hidden="true" />
+                          )}
+                          Verstecken
+                        </>
+                      )}
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => onStartEdit(task)}
+                      disabled={isBusy}
+                    >
+                      {isSavingEdit ? (
+                        <Spinner />
+                      ) : (
+                        <Pencil className="size-4" aria-hidden="true" />
+                      )}
+                      Bearbeiten
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => onDeleteTask(task.id)}
+                      disabled={isBusy}
+                    >
+                      {isDeleting ? (
+                        <Spinner />
+                      ) : (
+                        <Trash2 className="size-4" aria-hidden="true" />
+                      )}
+                      Löschen
+                    </Button>
+                  </CardFooter>
                 ) : null}
-              </CardContent>
-
-              {isAdmin ? (
-                <CardFooter className="flex flex-wrap gap-2 border-t">
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    onClick={() => onToggleStatus(task)}
-                    disabled={isBusy}
-                  >
-                    {isTogglingStatus ? (
-                      <Spinner />
-                    ) : (
-                      <ListChecks className="size-4" aria-hidden="true" />
-                    )}
-                    Status:{" "}
-                    {task.status === "open" ? "Auf Erledigt" : "Auf Offen"}
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    onClick={() => onToggleVisibility(task)}
-                    disabled={isBusy}
-                  >
-                    {task.isHidden ? (
-                      <>
-                        {isTogglingVisibility ? (
-                          <Spinner />
-                        ) : (
-                          <Eye className="size-4" aria-hidden="true" />
-                        )}
-                        Sichtbar machen
-                      </>
-                    ) : (
-                      <>
-                        {isTogglingVisibility ? (
-                          <Spinner />
-                        ) : (
-                          <EyeOff className="size-4" aria-hidden="true" />
-                        )}
-                        Verstecken
-                      </>
-                    )}
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    onClick={() => onStartEdit(task)}
-                    disabled={isBusy}
-                  >
-                    {isSavingEdit ? (
-                      <Spinner />
-                    ) : (
-                      <Pencil className="size-4" aria-hidden="true" />
-                    )}
-                    Bearbeiten
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="destructive"
-                    onClick={() => onDeleteTask(task.id)}
-                    disabled={isBusy}
-                  >
-                    {isDeleting ? (
-                      <Spinner />
-                    ) : (
-                      <Trash2 className="size-4" aria-hidden="true" />
-                    )}
-                    Löschen
-                  </Button>
-                </CardFooter>
-              ) : null}
-            </Card>
-          );
-        })}
+              </Card>
+            );
+          })}
       </div>
 
       <Dialog

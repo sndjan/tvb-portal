@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TaskStatus } from "@/lib/types";
+import { Footer } from "./Footer";
 import { TaskCards } from "./TaskCards";
 import { useHomeClient } from "./useHomeClient";
 import { Spinner } from "./ui/spinner";
@@ -209,6 +210,7 @@ export function HomeClient() {
           </TabsContent>
         </Tabs>
       </section>
+      <Footer />
     </main>
   );
 }

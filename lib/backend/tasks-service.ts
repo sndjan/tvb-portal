@@ -1319,6 +1319,91 @@ export async function removeEmailRecipient(
   }
 }
 
+export async function notifyParticipantRegistered(
+  task: TaskRecord,
+  participant: ParticipantRecord,
+): Promise<void> {
+  const contactEmail = process.env.NEXT_PUBLIC_TECHNICAL_CONTACT_EMAIL?.trim();
+  const resendApiKey = process.env.RESEND_API_KEY?.trim();
+
+  if (!contactEmail || !resendApiKey) {
+    return;
+  }
+
+  const resend = new Resend(resendApiKey);
+  const fullName = `${participant.firstName} ${participant.lastName}`;
+  const registeredAt = formatDateTime(participant.createdAt);
+  const subject = `Neue Anmeldung: ${task.title}`;
+
+  const html = `
+    <div style="font-family:Arial,sans-serif;line-height:1.6;color:#111827;">
+      <h1 style="font-size:20px;margin:0 0 16px;">Neue Anmeldung</h1>
+      <table style="border-collapse:collapse;margin:0 0 16px;">
+        <tr><td style="padding:4px 12px 4px 0;font-weight:600;vertical-align:top;">Name</td><td style="padding:4px 0;">${escapeHtml(fullName)}</td></tr>
+        <tr><td style="padding:4px 12px 4px 0;font-weight:600;vertical-align:top;">Einsatz</td><td style="padding:4px 0;">${escapeHtml(task.title)}</td></tr>
+        <tr><td style="padding:4px 12px 4px 0;font-weight:600;vertical-align:top;">Angemeldet am</td><td style="padding:4px 0;">${escapeHtml(registeredAt)}</td></tr>
+      </table>
+    </div>
+  `;
+
+  const text = `Neue Anmeldung\n\nName: ${fullName}\nEinsatz: ${task.title}\nAngemeldet am: ${registeredAt}`;
+
+  try {
+    await resend.emails.send({
+      from: "onboarding@resend.dev",
+      to: contactEmail,
+      subject,
+      html,
+      text,
+    });
+  } catch {
+    // non-fatal: registration already succeeded
+  }
+}
+
+export async function notifyParticipantUnregistered(
+  task: TaskRecord,
+  firstName: string,
+  lastName: string,
+): Promise<void> {
+  const contactEmail = process.env.NEXT_PUBLIC_TECHNICAL_CONTACT_EMAIL?.trim();
+  const resendApiKey = process.env.RESEND_API_KEY?.trim();
+
+  if (!contactEmail || !resendApiKey) {
+    return;
+  }
+
+  const resend = new Resend(resendApiKey);
+  const fullName = `${firstName} ${lastName}`;
+  const unregisteredAt = formatDateTime(new Date().toISOString());
+  const subject = `Abmeldung: ${task.title}`;
+
+  const html = `
+    <div style="font-family:Arial,sans-serif;line-height:1.6;color:#111827;">
+      <h1 style="font-size:20px;margin:0 0 16px;">Abmeldung</h1>
+      <table style="border-collapse:collapse;margin:0 0 16px;">
+        <tr><td style="padding:4px 12px 4px 0;font-weight:600;vertical-align:top;">Name</td><td style="padding:4px 0;">${escapeHtml(fullName)}</td></tr>
+        <tr><td style="padding:4px 12px 4px 0;font-weight:600;vertical-align:top;">Einsatz</td><td style="padding:4px 0;">${escapeHtml(task.title)}</td></tr>
+        <tr><td style="padding:4px 12px 4px 0;font-weight:600;vertical-align:top;">Abgemeldet am</td><td style="padding:4px 0;">${escapeHtml(unregisteredAt)}</td></tr>
+      </table>
+    </div>
+  `;
+
+  const text = `Abmeldung\n\nName: ${fullName}\nEinsatz: ${task.title}\nAbgemeldet am: ${unregisteredAt}`;
+
+  try {
+    await resend.emails.send({
+      from: "onboarding@resend.dev",
+      to: contactEmail,
+      subject,
+      html,
+      text,
+    });
+  } catch {
+    // non-fatal: unregistration already succeeded
+  }
+}
+
 export async function notifyTaskCreated(
   task: TaskRecord,
 ): Promise<TaskNotificationResult> {
@@ -1344,26 +1429,26 @@ export async function notifyTaskCreated(
     };
   }
 
-  const siteUrl =
-    process.env.MAIL_URL?.trim() ||
-    process.env.NEXT_PUBLIC_SITE_URL?.trim() ||
-    process.env.SITE_URL?.trim() ||
-    "";
-
   const resend = new Resend(resendApiKey);
-  const baseUrl = siteUrl.replace(/\/$/, "");
-  const taskUrl = baseUrl ? `${baseUrl}/` : null;
   const subject = `Neuer Arbeitseinsatz: ${task.title}`;
 
-  const startDate = task.startDate ? formatDateTime(task.startDate) : "n/a";
-  const endDate = task.endDate ? formatDateTime(task.endDate) : "n/a";
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL?.trim().replace(/\/+$/, "");
+  const taskUrl = baseUrl ? `${baseUrl}/` : null;
+  const contactName = process.env.NEXT_PUBLIC_TECHNICAL_CONTACT_NAME?.trim();
+  const contactEmail = process.env.NEXT_PUBLIC_TECHNICAL_CONTACT_EMAIL?.trim();
+
+  const startDate = task.startDate ? formatDateTime(task.startDate) : null;
+  const endDate = task.endDate ? formatDateTime(task.endDate) : null;
 
   const taskDetails = [
     ["Titel", task.title],
     ["Beschreibung", task.description],
     ["Start", startDate],
     ["Ende", endDate],
-    ["Dauer", task.durationEstimate],
+    [
+      "Dauer",
+      `${task.durationEstimate} ${task.durationEstimate === "1" ? "Stunde" : "Stunden"}`,
+    ],
     ["Max. Teilnehmer", task.maxParticipants?.toString() ?? null],
   ].filter((entry): entry is [string, string] => Boolean(entry[1]));
 
@@ -1377,13 +1462,13 @@ export async function notifyTaskCreated(
   const html = `
     <div style="font-family:Arial,sans-serif;line-height:1.6;color:#111827;">
       <h1 style="font-size:20px;margin:0 0 16px;">Neuer Arbeitseinsatz</h1>
-      <p style="margin:0 0 16px;">Ein neuer Einsatz wurde erstellt. Die Details:</p>
+      <p style="margin:0 0 16px;">Ein neuer Arbeitseinsatz wurde eingetragen. Die Details:</p>
       <table style="border-collapse:collapse;margin:0 0 16px;">${htmlRows}</table>
-      ${
-        taskUrl
-          ? `<p style="margin:0 0 8px;"><a href="${escapeHtml(taskUrl)}" style="color:#2563eb;">Zur Seite</a></p>`
-          : ""
-      }
+      <p style="margin:0 0 16px;">Wenn du dich für diesen Einsatz eintragen möchtest, kannst du das direkt auf der ${taskUrl ? `<a href="${escapeHtml(taskUrl)}" style="color:#2563eb;">Webseite</a>` : "Webseite"} tun.</p>
+      <p style="margin:0;">Du erhältst diese E-Mail, weil du in der Verteilerliste für Arbeitseinsätze eingetragen bist. 
+      Wenn du keine weiteren E-Mails dieser Art erhalten möchtest, wende dich bitte an 
+      ${escapeHtml(contactName ?? "den Technischen Leiter")}  
+      ${contactEmail ? `oder an ${escapeHtml(contactEmail)}` : ""}.</p>
     </div>
   `;
 

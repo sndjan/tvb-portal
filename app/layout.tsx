@@ -1,3 +1,4 @@
+import { CookieConsent } from "@/components/ui/cookie-consent";
 import { Toaster } from "@/components/ui/sonner";
 import { cn } from "@/lib/utils";
 import { Analytics } from "@vercel/analytics/next";
@@ -41,8 +42,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         {children}
-        <Toaster/>
-        <Analytics />
+        <Toaster />
       </body>
     </html>
   );
