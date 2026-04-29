@@ -18,6 +18,7 @@ import {
   Clock3,
   Eye,
   EyeOff,
+  Info,
   ListChecks,
   Pencil,
   Save,
@@ -338,7 +339,10 @@ export const TaskCards = ({
                         </Badge>
                       )}
                       {task.isHidden ? (
-                        <Badge variant="outline" className="gap-1">
+                        <Badge
+                          variant="outline"
+                          className="gap-1 tracking-wider font-bold"
+                        >
                           <EyeOff className="size-3" aria-hidden="true" />
                           Versteckt
                         </Badge>
@@ -743,18 +747,15 @@ export const TaskCards = ({
               </DialogHeader>
               <div className="grid gap-4">
                 <div className="grid gap-3 rounded-lg border bg-muted/20 p-4 text-sm text-muted-foreground">
-                  <p className="font-medium text-foreground">
-                    Was du jetzt wissen solltest
-                  </p>
+                  <div className="flex flex-wrap items-center gap-2 text-primary font-medium">
+                    <Info size={16} />
+                    <p className="font-medium text-foreground">Infos</p>
+                  </div>
                   <ul className="grid gap-2">
                     <li>Du kannst diese Anmeldung jederzeit wieder ändern.</li>
                     <li>
                       Falls sich deine Daten ändern, bitte den Namen im Dialog
                       anpassen.
-                    </li>
-                    <li>
-                      Bei Fragen oder Details melde dich bitte beim TV
-                      Bellenberg Vorstand.
                     </li>
                   </ul>
                 </div>
@@ -815,7 +816,7 @@ export const TaskCards = ({
                   onChange={(event) => setLastName(event.target.value)}
                 />
 
-                <label className="inline-flex items-center gap-2 text-sm">
+                {/* <label className="inline-flex items-center gap-2 text-sm">
                   <input
                     type="checkbox"
                     checked={rememberMe}
@@ -831,7 +832,7 @@ export const TaskCards = ({
                     }}
                   />
                   Namen merken
-                </label>
+                </label> */}
 
                 {isCheckingRegistration ? (
                   <p className="text-sm text-muted-foreground">
