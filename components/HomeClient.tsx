@@ -77,22 +77,23 @@ export function HomeClient() {
   } = useHomeClient();
 
   return (
-    <main className="min-h-screen bg-linear-to-b from-background via-background to-muted/40 pb-14">
-      <section className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 pt-4 sm:px-6 lg:px-8">
-        <header className="flex flex-col gap-4 rounded-2xl border bg-card/70 p-5 backdrop-blur-sm">
-          <div className="flex flex-wrap items-start justify-between gap-3">
+    <main className="min-h-screen bg-linear-to-b from-background via-background to-muted/40 flex flex-col">
+      <section className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 pt-4 pb-14 sm:px-6 lg:px-8 flex-1">
+        <header className="flex flex-col gap-4 rounded-2xl  p-5 backdrop-blur-sm bg-[#1e581e] ">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">
+              <h1 className="text-2xl font-semibold sm:text-3xl text-white">
                 TV Bellenberg
               </h1>
-              <p className="text-xs font-medium tracking-wider text-muted-foreground uppercase">
+              <p className="text-xs font-medium tracking-widest uppercase text-[#99b399]">
                 Arbeitseinsätze
               </p>
             </div>
 
             {isAdmin ? (
               <Button
-                variant="outline"
+                variant="default"
+                className="bg-[#396c39]"
                 size="sm"
                 onClick={handleLogout}
                 disabled={isLoggingOut}

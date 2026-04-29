@@ -30,7 +30,7 @@ export const LoginForm = ({
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="outline">
+        <Button variant="default" className="bg-[#396c39]">
           <LogIn className="size-4" aria-hidden="true" />
         </Button>
       </DialogTrigger>

@@ -48,7 +48,11 @@ export const MailingList = ({
             onChange={(event) => setEmailInput(event.target.value)}
             required
           />
-          <Button type="submit" disabled={isLoadingEmailRecipients}>
+          <Button
+            type="submit"
+            variant={"outline"}
+            disabled={isLoadingEmailRecipients}
+          >
             <Plus className="size-4" aria-hidden="true" />
           </Button>
         </form>

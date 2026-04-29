@@ -1,22 +1,10 @@
-import { CookieConsent } from "@/components/ui/cookie-consent";
 import { Toaster } from "@/components/ui/sonner";
 import { cn } from "@/lib/utils";
-import { Analytics } from "@vercel/analytics/next";
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Inter } from "next/font/google";
+import { DM_Sans } from "next/font/google";
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+const dmSans = DM_Sans({ subsets: ["latin"], variable: "--font-sans" });
 
 export const metadata: Metadata = {
   title: "TVB Arbeitseinsätze",
@@ -34,10 +22,8 @@ export default function RootLayout({
       className={cn(
         "h-full",
         "antialiased",
-        geistSans.variable,
-        geistMono.variable,
+        dmSans.variable,
         "font-sans",
-        inter.variable,
       )}
     >
       <body className="min-h-full flex flex-col">

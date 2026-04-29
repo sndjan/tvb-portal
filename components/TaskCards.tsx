@@ -14,6 +14,7 @@ import {
 import { baseFieldClass, formatDateRange, toMessage } from "@/lib/utils";
 import {
   CalendarDays,
+  Check,
   Clock3,
   Eye,
   EyeOff,
@@ -289,6 +290,7 @@ export const TaskCards = ({
           .map((task) => {
             const taskBusy = busyTaskIds.find((busy) => busy.id === task.id);
             const isBusy = Boolean(taskBusy?.busy);
+            const isOpen = task.status === "open";
             // const firstImage = task.images[0];
 
             const isDeleting =
@@ -306,7 +308,10 @@ export const TaskCards = ({
             // const upload = pendingUploads[task.id];
 
             return (
-              <Card key={task.id} className="border-l-4 border-l-primary/60">
+              <Card
+                key={task.id}
+                className={`border-l-4 ${isOpen ? "border-l-primary/80" : ""}`}
+              >
                 <CardHeader className="gap-2">
                   <div className="flex items-start justify-between gap-3">
                     <div className="space-y-1">
@@ -316,13 +321,22 @@ export const TaskCards = ({
                       <CardDescription>{task.description}</CardDescription>
                     </div>
                     <div className="flex flex-wrap items-center justify-end gap-1.5">
-                      <Badge
-                        variant={
-                          task.status === "done" ? "secondary" : "default"
-                        }
-                      >
-                        {task.status === "done" ? "Erledigt" : "Offen"}
-                      </Badge>
+                      {task.status === "open" ? (
+                        <Badge
+                          variant={"default"}
+                          className="bg-[#eaf4d4] text-primary tracking-wider font-bold"
+                        >
+                          Offen
+                        </Badge>
+                      ) : (
+                        <Badge
+                          variant={"secondary"}
+                          className="tracking-wider text-[#666666] font-bold"
+                        >
+                          <Check strokeWidth={3} />
+                          Erledigt
+                        </Badge>
+                      )}
                       {task.isHidden ? (
                         <Badge variant="outline" className="gap-1">
                           <EyeOff className="size-3" aria-hidden="true" />

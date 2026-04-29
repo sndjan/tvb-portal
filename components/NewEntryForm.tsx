@@ -38,37 +38,37 @@ export const NewEntryForm = ({
     <Card>
       <CardHeader>
         <CardTitle>Neuen Einsatz erstellen</CardTitle>
-        <CardDescription>
-          Titel und Beschreibung sind Pflichtfelder. Datum und Uhrzeit sind
-          optional. E-Mail Versand ist optional.
-        </CardDescription>
       </CardHeader>
       <CardContent>
         <form className="grid gap-3" onSubmit={handleCreateTask}>
-          <Input
-            className={baseFieldClass}
-            placeholder="Titel *"
-            value={createForm.title}
-            onChange={(event) =>
-              setCreateForm((prev) => ({
-                ...prev,
-                title: event.target.value,
-              }))
-            }
-            required
-          />
-          <Textarea
-            className={`${baseFieldClass} min-h-24`}
-            placeholder="Beschreibung *"
-            value={createForm.description}
-            onChange={(event) =>
-              setCreateForm((prev) => ({
-                ...prev,
-                description: event.target.value,
-              }))
-            }
-            required
-          />
+          <label className="grid gap-1 text-xs text-muted-foreground">
+            Titel *
+            <Input
+              className={baseFieldClass}
+              value={createForm.title}
+              onChange={(event) =>
+                setCreateForm((prev) => ({
+                  ...prev,
+                  title: event.target.value,
+                }))
+              }
+              required
+            />
+          </label>
+          <label className="grid gap-1 text-xs text-muted-foreground">
+            Beschreibung *
+            <Textarea
+              className={`${baseFieldClass} min-h-24`}
+              value={createForm.description}
+              onChange={(event) =>
+                setCreateForm((prev) => ({
+                  ...prev,
+                  description: event.target.value,
+                }))
+              }
+              required
+            />
+          </label>
 
           <div className="grid gap-2">
             <label className="grid gap-1 text-xs text-muted-foreground">
@@ -146,32 +146,36 @@ export const NewEntryForm = ({
           )}
 
           <div className="grid gap-3 sm:grid-cols-2">
-            <Input
-              type="number"
-              step="0.5"
-              className={baseFieldClass}
-              placeholder="Dauer in Stunden (optional)"
-              value={createForm.durationEstimate}
-              onChange={(event) =>
-                setCreateForm((prev) => ({
-                  ...prev,
-                  durationEstimate: event.target.value,
-                }))
-              }
-            />
-            <Input
-              type="number"
-              min={1}
-              className={baseFieldClass}
-              placeholder="Max. benötigte Personen (optional)"
-              value={createForm.maxParticipants}
-              onChange={(event) =>
-                setCreateForm((prev) => ({
-                  ...prev,
-                  maxParticipants: event.target.value,
-                }))
-              }
-            />
+            <label className="grid gap-1 text-xs text-muted-foreground">
+              Max. benötigte Personen (optional)
+              <Input
+                type="number"
+                step="0.5"
+                className={baseFieldClass}
+                value={createForm.durationEstimate}
+                onChange={(event) =>
+                  setCreateForm((prev) => ({
+                    ...prev,
+                    durationEstimate: event.target.value,
+                  }))
+                }
+              />
+            </label>
+            <label className="grid gap-1 text-xs text-muted-foreground">
+              Max. benötigte Personen (optional)
+              <Input
+                type="number"
+                min={1}
+                className={baseFieldClass}
+                value={createForm.maxParticipants}
+                onChange={(event) =>
+                  setCreateForm((prev) => ({
+                    ...prev,
+                    maxParticipants: event.target.value,
+                  }))
+                }
+              />
+            </label>
           </div>
 
           <div className="flex flex-col gap-2 text-sm sm:flex-row sm:items-center">
