@@ -4,7 +4,7 @@ import { LogOut } from "lucide-react";
 
 import { LoginForm } from "@/components/LoginForm";
 import { MailingList } from "@/components/MailingList";
-import { NewEntryForm } from "@/components/NewEntryForm";
+import { TaskForm } from "@/components/NewEntryForm";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -120,11 +120,12 @@ export function HomeClient() {
 
         {isAdmin ? (
           <div className="grid gap-4 lg:grid-cols-[2fr_1fr]">
-            <NewEntryForm
-              handleCreateTask={handleCreateTask}
-              createForm={createForm}
-              setCreateForm={setCreateForm}
-              isCreatingTask={isCreatingTask}
+            <TaskForm
+              mode="create"
+              form={createForm}
+              setForm={(v) => setCreateForm(v)}
+              isPending={isCreatingTask}
+              onSubmit={handleCreateTask}
             />
 
             <MailingList
@@ -168,7 +169,7 @@ export function HomeClient() {
                 }
                 onStartEdit={startEditTask}
                 onCancelEdit={onCancelEdit}
-                onChangeEditForm={setEditForm}
+                onChangeEditForm={(v) => setEditForm(v)}
                 onSaveEdit={handleSaveEdit}
                 onDeleteTask={handleDeleteTask}
                 onToggleStatus={toggleTaskStatus}
@@ -198,7 +199,7 @@ export function HomeClient() {
                 }
                 onStartEdit={startEditTask}
                 onCancelEdit={onCancelEdit}
-                onChangeEditForm={setEditForm}
+                onChangeEditForm={(v) => setEditForm(v)}
                 onSaveEdit={handleSaveEdit}
                 onDeleteTask={handleDeleteTask}
                 onToggleStatus={toggleTaskStatus}

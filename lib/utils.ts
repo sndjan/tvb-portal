@@ -1,6 +1,6 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { CreateTaskFormState, TaskWithDetails } from "./types";
+import { TaskFormState, TaskWithDetails } from "./types";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -9,7 +9,7 @@ export function cn(...inputs: ClassValue[]) {
 export const baseFieldClass =
   "w-full rounded-md border border-input bg-background px-3 py-2 text-sm leading-tight";
 
-export function getDefaultCreateForm(): CreateTaskFormState {
+export function getDefaultTaskForm(): TaskFormState {
   return {
     title: "",
     description: "",

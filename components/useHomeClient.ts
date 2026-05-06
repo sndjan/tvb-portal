@@ -7,18 +7,17 @@ import { requestJson } from "@/lib/api";
 import {
   Action,
   BusyTask,
-  CreateTaskFormState,
-  EditTaskFormState,
   EmailRecipient,
   ImageRecord,
   PendingUpload,
+  TaskFormState,
   TasksResponse,
   TaskStatus,
   TaskWithDetails,
 } from "@/lib/types";
 import {
   fromDateTimeLocalValue,
-  getDefaultCreateForm,
+  getDefaultTaskForm,
   toDateTimeLocalValue,
   toMessage,
 } from "@/lib/utils";
@@ -33,13 +32,13 @@ export function useHomeClient() {
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-  const [createForm, setCreateForm] = useState<CreateTaskFormState>(
-    getDefaultCreateForm(),
+  const [createForm, setCreateForm] = useState<TaskFormState>(
+    getDefaultTaskForm(),
   );
   const [isCreatingTask, setIsCreatingTask] = useState(false);
 
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState<EditTaskFormState | null>(null);
+  const [editForm, setEditForm] = useState<TaskFormState | null>(null);
   const [busyTaskIds, setBusyTaskIds] = useState<BusyTask[]>([]);
 
   const [emailRecipients, setEmailRecipients] = useState<EmailRecipient[]>([]);
@@ -170,7 +169,7 @@ export function useHomeClient() {
     }
   }
 
-  async function handleCreateTask(event: React.FormEvent<HTMLFormElement>) {
+  async function handleCreateTask(event: React.SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
     setIsCreatingTask(true);
 
@@ -206,7 +205,7 @@ export function useHomeClient() {
         body: JSON.stringify(payload),
       });
 
-      setCreateForm(getDefaultCreateForm());
+      setCreateForm(getDefaultTaskForm());
 
       if (response.notification?.message) {
         toast.success(response.notification.message);
@@ -223,17 +222,30 @@ export function useHomeClient() {
   }
 
   function startEditTask(task: TaskWithDetails) {
+    // Range mode stores dates as YYYY-MM-DD (no T); start mode stores full ISO datetimes.
+    const isStartMode =
+      task.startDate !== null &&
+      task.endDate === null &&
+      task.startDate.includes("T");
+    const scheduleType = isStartMode ? "start" : "range";
+
     setEditingTaskId(task.id);
     setEditForm({
       title: task.title,
       description: task.description,
-      startDate: toDateTimeLocalValue(task.startDate),
-      endDate: toDateTimeLocalValue(task.endDate),
-      durationEstimate: task.durationEstimate || "",
+      scheduleType,
+      rangeStartDate: scheduleType === "range" ? (task.startDate ?? "") : "",
+      rangeEndDate: scheduleType === "range" ? (task.endDate ?? "") : "",
+      startDateTime:
+        scheduleType === "start"
+          ? toDateTimeLocalValue(task.startDate)
+          : "",
+      durationEstimate: task.durationEstimate ?? "",
       maxParticipants:
         task.maxParticipants === null ? "" : String(task.maxParticipants),
       status: task.status,
       isHidden: task.isHidden,
+      sendEmail: false,
     });
   }
 
@@ -246,14 +258,21 @@ export function useHomeClient() {
 
     try {
       const maxParticipantsValue = editForm.maxParticipants.trim();
+      const isRangeMode = editForm.scheduleType === "range";
+      const startDate = isRangeMode
+        ? editForm.rangeStartDate.trim() || null
+        : fromDateTimeLocalValue(editForm.startDateTime);
+      const endDate = isRangeMode
+        ? editForm.rangeEndDate.trim() || null
+        : null;
 
       await requestJson<{ task: TaskWithDetails }>(`/api/tasks/${taskId}`, {
         method: "PATCH",
         body: JSON.stringify({
           title: editForm.title,
           description: editForm.description,
-          startDate: fromDateTimeLocalValue(editForm.startDate),
-          endDate: fromDateTimeLocalValue(editForm.endDate),
+          startDate,
+          endDate,
           durationEstimate: editForm.durationEstimate.trim() || null,
           maxParticipants: maxParticipantsValue
             ? Number(maxParticipantsValue)

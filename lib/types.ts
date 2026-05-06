@@ -41,7 +41,7 @@ export type EmailRecipient = {
   email: string;
 };
 
-export type CreateTaskFormState = {
+export type TaskFormState = {
   title: string;
   description: string;
   scheduleType: "range" | "start";
@@ -53,17 +53,6 @@ export type CreateTaskFormState = {
   status: TaskStatus;
   isHidden: boolean;
   sendEmail: boolean;
-};
-
-export type EditTaskFormState = {
-  title: string;
-  description: string;
-  startDate: string;
-  endDate: string;
-  durationEstimate: string;
-  maxParticipants: string;
-  status: TaskStatus;
-  isHidden: boolean;
 };
 
 export type PendingUpload = {

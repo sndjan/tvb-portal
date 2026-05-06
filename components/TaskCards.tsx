@@ -3,15 +3,15 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { requestJson } from "@/lib/api";
-import { TaskStatus } from "@/lib/tasks";
 import {
   Action,
   BusyTask,
-  EditTaskFormState,
   PendingUpload,
+  TaskFormState,
   TaskWithDetails,
 } from "@/lib/types";
 import { baseFieldClass, formatDateRange, toMessage } from "@/lib/utils";
+import { TaskForm } from "./NewEntryForm";
 import {
   CalendarDays,
   Check,
@@ -21,7 +21,6 @@ import {
   Info,
   ListChecks,
   Pencil,
-  Save,
   Trash2,
   UserPlus,
   Users,
@@ -46,15 +45,7 @@ import {
   DialogTitle,
 } from "./ui/dialog";
 import { Input } from "./ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "./ui/select";
 import { Spinner } from "./ui/spinner";
-import { Textarea } from "./ui/textarea";
 
 const STORAGE_KEY = "tvb-registration-profile";
 const TECHNICAL_CONTACT_NAME = process.env.NEXT_PUBLIC_TECHNICAL_CONTACT_NAME;
@@ -95,12 +86,12 @@ type TaskCardsProps = {
   tasks: TaskWithDetails[];
   isAdmin: boolean;
   editingTaskId: string | null;
-  editForm: EditTaskFormState | null;
+  editForm: TaskFormState | null;
   busyTaskIds: BusyTask[];
   pendingUploads: Record<string, PendingUpload>;
   onStartEdit: (task: TaskWithDetails) => void;
   onCancelEdit: () => void;
-  onChangeEditForm: (value: EditTaskFormState | null) => void;
+  onChangeEditForm: (value: TaskFormState) => void;
   onSaveEdit: (taskId: string) => void;
   onDeleteTask: (taskId: string) => void;
   onToggleStatus: (task: TaskWithDetails) => void;
@@ -513,137 +504,17 @@ export const TaskCards = ({
                       <h3 className="text-sm font-medium">
                         Einsatz bearbeiten
                       </h3>
-                      <Input
-                        className={baseFieldClass}
-                        value={editForm.title}
-                        onChange={(event) =>
-                          onChangeEditForm({
-                            ...editForm,
-                            title: event.target.value,
-                          })
-                        }
+                      <TaskForm
+                        mode="edit"
+                        form={editForm}
+                        setForm={(v) => onChangeEditForm(v)}
+                        isPending={isSavingEdit}
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          void onSaveEdit(task.id);
+                        }}
+                        onCancel={onCancelEdit}
                       />
-                      <Textarea
-                        className={`${baseFieldClass} min-h-24`}
-                        value={editForm.description}
-                        onChange={(event) =>
-                          onChangeEditForm({
-                            ...editForm,
-                            description: event.target.value,
-                          })
-                        }
-                      />
-
-                      <div className="grid gap-3 sm:grid-cols-2">
-                        <label className="grid gap-1 text-xs text-muted-foreground">
-                          Startdatum
-                          <Input
-                            type="datetime-local"
-                            className={baseFieldClass}
-                            value={editForm.startDate}
-                            onChange={(event) =>
-                              onChangeEditForm({
-                                ...editForm,
-                                startDate: event.target.value,
-                              })
-                            }
-                          />
-                        </label>
-                        <label className="grid gap-1 text-xs text-muted-foreground">
-                          Enddatum
-                          <Input
-                            type="datetime-local"
-                            className={baseFieldClass}
-                            value={editForm.endDate}
-                            onChange={(event) =>
-                              onChangeEditForm({
-                                ...editForm,
-                                endDate: event.target.value,
-                              })
-                            }
-                          />
-                        </label>
-                      </div>
-
-                      <div className="grid gap-3 sm:grid-cols-3">
-                        <Input
-                          className={baseFieldClass}
-                          placeholder="Dauer"
-                          value={editForm.durationEstimate}
-                          onChange={(event) =>
-                            onChangeEditForm({
-                              ...editForm,
-                              durationEstimate: event.target.value,
-                            })
-                          }
-                        />
-                        <Input
-                          type="number"
-                          min={1}
-                          className={baseFieldClass}
-                          placeholder="Maximale Teilnehmer"
-                          value={editForm.maxParticipants}
-                          onChange={(event) =>
-                            onChangeEditForm({
-                              ...editForm,
-                              maxParticipants: event.target.value,
-                            })
-                          }
-                        />
-                        <Select
-                          value={editForm.status}
-                          onValueChange={(event) =>
-                            onChangeEditForm({
-                              ...editForm,
-                              status: event as TaskStatus,
-                            })
-                          }
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Status auswählen" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="open">Offen</SelectItem>
-                            <SelectItem value="done">Erledigt</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <label className="inline-flex items-center gap-2 text-sm">
-                        <input
-                          type="checkbox"
-                          checked={editForm.isHidden}
-                          onChange={(event) =>
-                            onChangeEditForm({
-                              ...editForm,
-                              isHidden: event.target.checked,
-                            })
-                          }
-                        />
-                        Versteckt (nur Admin)
-                      </label>
-
-                      <div className="flex gap-2">
-                        <Button
-                          type="button"
-                          onClick={() => onSaveEdit(task.id)}
-                          disabled={isBusy}
-                        >
-                          {isSavingEdit ? (
-                            <Spinner />
-                          ) : (
-                            <Save className="size-4" aria-hidden="true" />
-                          )}
-                          Speichern
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          onClick={onCancelEdit}
-                        >
-                          Abbrechen
-                        </Button>
-                      </div>
                     </div>
                   ) : null}
                 </CardContent>
@@ -697,7 +568,7 @@ export const TaskCards = ({
                       size="sm"
                       variant="outline"
                       onClick={() => onStartEdit(task)}
-                      disabled={isBusy}
+                      disabled={isBusy || isEditing}
                     >
                       {isSavingEdit ? (
                         <Spinner />
