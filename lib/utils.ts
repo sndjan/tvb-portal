@@ -77,7 +77,7 @@ export function formatDateTime(value: string) {
   }).format(date);
 }
 
-function formatDateOnly(value: string) {
+export function formatDateOnly(value: string) {
   const date = new Date(value);
 
   if (Number.isNaN(date.valueOf())) {

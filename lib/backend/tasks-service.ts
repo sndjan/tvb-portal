@@ -10,7 +10,7 @@ import {
   getSupabaseServiceClientOrThrow,
   getTaskImagesBucketName,
 } from "@/lib/backend/supabase";
-import { formatDateTime } from "../utils";
+import { formatDateOnly, formatDateTime } from "../utils";
 
 export type TaskStatus = "open" | "done";
 
@@ -1377,7 +1377,8 @@ export async function notifyParticipantRegistered(
   const subject = `Neue Anmeldung: ${task.title}`;
 
   const html = `
-    <div style="font-family:Arial,sans-serif;line-height:1.6;color:#111827;">
+    <style>@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600&display=swap');</style>
+    <div style="font-family:'DM Sans',Arial,sans-serif;line-height:1.6;color:#111827;">
       <h1 style="font-size:20px;margin:0 0 16px;">Neue Anmeldung</h1>
       <table style="border-collapse:collapse;margin:0 0 16px;">
         <tr><td style="padding:4px 12px 4px 0;font-weight:600;vertical-align:top;">Name</td><td style="padding:4px 0;">${escapeHtml(fullName)}</td></tr>
@@ -1420,7 +1421,8 @@ export async function notifyParticipantUnregistered(
   const subject = `Abmeldung: ${task.title}`;
 
   const html = `
-    <div style="font-family:Arial,sans-serif;line-height:1.6;color:#111827;">
+    <style>@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600&display=swap');</style>
+    <div style="font-family:'DM Sans',Arial,sans-serif;line-height:1.6;color:#111827;">
       <h1 style="font-size:20px;margin:0 0 16px;">Abmeldung</h1>
       <table style="border-collapse:collapse;margin:0 0 16px;">
         <tr><td style="padding:4px 12px 4px 0;font-weight:600;vertical-align:top;">Name</td><td style="padding:4px 0;">${escapeHtml(fullName)}</td></tr>
@@ -1480,17 +1482,28 @@ export async function notifyTaskCreated(
     .replace(/\/+$/, "");
   const taskUrl = baseUrl ? `${baseUrl}/` : null;
 
-  const startDate = task.startDate ? formatDateTime(task.startDate) : null;
-  const endDate = task.endDate ? formatDateTime(task.endDate) : null;
+  let startDate = null;
+  let endDate = null;
+  let isTimeframe = false;
+  if (task.startDate && task.endDate) {
+    console.log(task.endDate);
+    startDate = formatDateOnly(task.startDate);
+    endDate = formatDateOnly(task.endDate);
+    isTimeframe = true;
+  } else if (task.startDate) {
+    startDate = formatDateTime(task.startDate);
+  }
 
   const taskDetails = [
     ["Titel", task.title],
     ["Beschreibung", task.description],
-    ["Start", startDate],
-    ["Ende", endDate],
+    ["Zeitraum", isTimeframe ? `${startDate} bis ${endDate}` : null],
+    ["Start", !isTimeframe ? startDate : null],
     [
       "Dauer",
-      `${task.durationEstimate} ${task.durationEstimate === "1" ? "Stunde" : "Stunden"}`,
+      task.durationEstimate
+        ? `${task.durationEstimate} ${task.durationEstimate === "1" ? "Stunde" : "Stunden"}`
+        : null,
     ],
     ["Max. Teilnehmer", task.maxParticipants?.toString() ?? null],
   ].filter((entry): entry is [string, string] => Boolean(entry[1]));
@@ -1527,7 +1540,8 @@ export async function notifyTaskCreated(
           : "";
 
         const html = `
-    <div style="font-family:Arial,sans-serif;line-height:1.6;color:#111827;">
+    <style>@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600&display=swap');</style>
+    <div style="font-family:'DM Sans',Arial,sans-serif;line-height:1.6;color:#111827;">
       <h1 style="font-size:20px;margin:0 0 16px;">Neuer Arbeitseinsatz</h1>
       <p style="margin:0 0 16px;">Ein neuer Arbeitseinsatz wurde eingetragen. Die Details:</p>
       <table style="border-collapse:collapse;margin:0 0 16px;">${htmlRows}</table>
@@ -1568,14 +1582,6 @@ function escapeHtml(value: string): string {
     .replace(/>/g, "&gt;")
     .replace(/\"/g, "&quot;")
     .replace(/'/g, "&#39;");
-}
-
-function formatDateOnly(value: string | null): string | null {
-  if (!value) {
-    return null;
-  }
-
-  return value.split("T")[0] ?? value;
 }
 
 function escapeIcsText(value: string): string {
