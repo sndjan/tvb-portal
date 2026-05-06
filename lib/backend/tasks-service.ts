@@ -1,6 +1,6 @@
 import "server-only";
 
-import { randomUUID } from "node:crypto";
+import { createHmac, randomUUID, timingSafeEqual } from "node:crypto";
 
 import { Resend } from "resend";
 import { z } from "zod";
@@ -1319,6 +1319,47 @@ export async function removeEmailRecipient(
   }
 }
 
+export async function removeEmailRecipientByEmail(
+  email: string,
+): Promise<void> {
+  const supabase = getSupabaseServiceClientOrThrow();
+
+  const { error } = await supabase
+    .from("email_list")
+    .delete()
+    .eq("email", email.toLowerCase());
+
+  if (error) {
+    throw new HttpError(
+      500,
+      "E-Mail konnte nicht gelöscht werden",
+      "email_delete_failed",
+    );
+  }
+}
+
+export function generateUnsubscribeToken(email: string): string {
+  const secret = process.env.UNSUBSCRIBE_SECRET?.trim();
+  if (!secret) return "";
+  return createHmac("sha256", secret).update(email.toLowerCase()).digest("hex");
+}
+
+export function verifyUnsubscribeToken(email: string, token: string): boolean {
+  const secret = process.env.UNSUBSCRIBE_SECRET?.trim();
+  if (!secret || !token) return false;
+  const expected = createHmac("sha256", secret)
+    .update(email.toLowerCase())
+    .digest("hex");
+  try {
+    return timingSafeEqual(
+      Buffer.from(token, "hex"),
+      Buffer.from(expected, "hex"),
+    );
+  } catch {
+    return false;
+  }
+}
+
 export async function notifyParticipantRegistered(
   task: TaskRecord,
   participant: ParticipantRecord,
@@ -1432,10 +1473,12 @@ export async function notifyTaskCreated(
   const resend = new Resend(resendApiKey);
   const subject = `Neuer Arbeitseinsatz: ${task.title}`;
 
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL?.trim().replace(/\/+$/, "");
+  const baseUrl = (
+    process.env.NEXT_PUBLIC_BASE_URL || process.env.WEBSITE_BASE_URL
+  )
+    ?.trim()
+    .replace(/\/+$/, "");
   const taskUrl = baseUrl ? `${baseUrl}/` : null;
-  const contactName = process.env.NEXT_PUBLIC_TECHNICAL_CONTACT_NAME?.trim();
-  const contactEmail = process.env.NEXT_PUBLIC_TECHNICAL_CONTACT_EMAIL?.trim();
 
   const startDate = task.startDate ? formatDateTime(task.startDate) : null;
   const endDate = task.endDate ? formatDateTime(task.endDate) : null;
@@ -1459,19 +1502,6 @@ export async function notifyTaskCreated(
     )
     .join("");
 
-  const html = `
-    <div style="font-family:Arial,sans-serif;line-height:1.6;color:#111827;">
-      <h1 style="font-size:20px;margin:0 0 16px;">Neuer Arbeitseinsatz</h1>
-      <p style="margin:0 0 16px;">Ein neuer Arbeitseinsatz wurde eingetragen. Die Details:</p>
-      <table style="border-collapse:collapse;margin:0 0 16px;">${htmlRows}</table>
-      <p style="margin:0 0 16px;">Wenn du dich für diesen Einsatz eintragen möchtest, kannst du das direkt auf der ${taskUrl ? `<a href="${escapeHtml(taskUrl)}" style="color:#2563eb;">Webseite</a>` : "Webseite"} tun.</p>
-      <p style="margin:0;">Du erhältst diese E-Mail, weil du in der Verteilerliste für Arbeitseinsätze eingetragen bist. 
-      Wenn du keine weiteren E-Mails dieser Art erhalten möchtest, wende dich bitte an 
-      ${escapeHtml(contactName ?? "den Technischen Leiter")}  
-      ${contactEmail ? `oder an ${escapeHtml(contactEmail)}` : ""}.</p>
-    </div>
-  `;
-
   const textLines = [
     "Neuer Arbeitseinsatz",
     "",
@@ -1481,15 +1511,39 @@ export async function notifyTaskCreated(
 
   try {
     await Promise.all(
-      recipients.map((recipient) =>
-        resend.emails.send({
+      recipients.map((recipient) => {
+        const token = generateUnsubscribeToken(recipient.email);
+        const unsubscribeUrl =
+          baseUrl && token
+            ? `${baseUrl}/api/unsubscribe?email=${encodeURIComponent(recipient.email)}&token=${token}`
+            : null;
+
+        const unsubscribeHtml = unsubscribeUrl
+          ? `<p style="margin:0;font-size:13px;color:#6b7280;">Du erhältst diese E-Mail, weil du in der Verteilerliste für Arbeitseinsätze eingetragen bist. <a href="${escapeHtml(unsubscribeUrl)}" style="color:#6b7280;">Abmelden</a></p>`
+          : `<p style="margin:0;font-size:13px;color:#6b7280;">Du erhältst diese E-Mail, weil du in der Verteilerliste für Arbeitseinsätze eingetragen bist.</p>`;
+
+        const unsubscribeText = unsubscribeUrl
+          ? `\n\nAbmelden: ${unsubscribeUrl}`
+          : "";
+
+        const html = `
+    <div style="font-family:Arial,sans-serif;line-height:1.6;color:#111827;">
+      <h1 style="font-size:20px;margin:0 0 16px;">Neuer Arbeitseinsatz</h1>
+      <p style="margin:0 0 16px;">Ein neuer Arbeitseinsatz wurde eingetragen. Die Details:</p>
+      <table style="border-collapse:collapse;margin:0 0 16px;">${htmlRows}</table>
+      <p style="margin:0 0 16px;">Wenn du dich für diesen Einsatz eintragen möchtest, kannst du das direkt auf der ${taskUrl ? `<a href="${escapeHtml(taskUrl)}" style="color:#2563eb;">Webseite</a>` : "Webseite"} tun.</p>
+      ${unsubscribeHtml}
+    </div>
+  `;
+
+        return resend.emails.send({
           from: "onboarding@resend.dev",
           to: recipient.email,
           subject,
           html,
-          text: textLines.join("\n"),
-        }),
-      ),
+          text: textLines.join("\n") + unsubscribeText,
+        });
+      }),
     );
   } catch {
     throw new HttpError(
