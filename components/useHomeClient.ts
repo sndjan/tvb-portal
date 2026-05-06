@@ -426,6 +426,26 @@ export function useHomeClient() {
     }
   }
 
+  async function handleSendTaskEmail(taskId: string) {
+    setTaskBusy(taskId, true, Action.SendEmail);
+
+    try {
+      const result = await requestJson<{
+        notification: { sent: boolean; message: string };
+      }>(`/api/tasks/${taskId}/notify`, { method: "POST" });
+
+      if (result.notification.sent) {
+        toast.success(result.notification.message || "E-Mail erfolgreich gesendet.");
+      } else {
+        toast.error(result.notification.message || "E-Mail konnte nicht gesendet werden.");
+      }
+    } catch (error) {
+      toast.error(toMessage(error));
+    } finally {
+      setTaskBusy(taskId, false, Action.SendEmail);
+    }
+  }
+
   async function handleDeleteImage(taskId: string, imageId: string) {
     setTaskBusy(taskId, true, Action.DeleteImage);
 
@@ -535,6 +555,7 @@ export function useHomeClient() {
     updateUploadSelection,
     handleUploadImages,
     handleDeleteImage,
+    handleSendTaskEmail,
     handleAddEmailRecipient,
     handleRemoveEmailRecipient,
     onCancelEdit: () => {

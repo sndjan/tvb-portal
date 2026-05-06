@@ -73,4 +73,5 @@ export enum Action {
   DeleteTask = "delete_task",
   UploadImages = "upload_images",
   DeleteImage = "delete_image",
+  SendEmail = "send_email",
 }

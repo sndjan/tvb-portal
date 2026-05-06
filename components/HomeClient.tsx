@@ -71,6 +71,7 @@ export function HomeClient() {
     updateUploadSelection,
     handleUploadImages,
     handleDeleteImage,
+    handleSendTaskEmail,
     handleAddEmailRecipient,
     handleRemoveEmailRecipient,
     onCancelEdit,
@@ -177,6 +178,7 @@ export function HomeClient() {
                 onSelectUpload={updateUploadSelection}
                 onUploadImages={handleUploadImages}
                 onDeleteImage={handleDeleteImage}
+                onSendEmail={handleSendTaskEmail}
               />
             )}
           </TabsContent>
@@ -207,6 +209,7 @@ export function HomeClient() {
                 onSelectUpload={updateUploadSelection}
                 onUploadImages={handleUploadImages}
                 onDeleteImage={handleDeleteImage}
+                onSendEmail={handleSendTaskEmail}
               />
             )}
           </TabsContent>

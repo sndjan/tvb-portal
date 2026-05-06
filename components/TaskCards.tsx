@@ -20,6 +20,7 @@ import {
   EyeOff,
   Info,
   ListChecks,
+  Mail,
   Pencil,
   Trash2,
   UserPlus,
@@ -99,6 +100,7 @@ type TaskCardsProps = {
   onSelectUpload: (taskId: string, files: FileList | null) => void;
   onUploadImages: (taskId: string) => void;
   onDeleteImage: (taskId: string, imageId: string) => void;
+  onSendEmail: (taskId: string) => void;
   onParticipantsChanged?: () => void | Promise<void>;
 };
 
@@ -119,10 +121,12 @@ export const TaskCards = ({
   // onSelectUpload,
   // onUploadImages,
   // onDeleteImage,
+  onSendEmail,
   onParticipantsChanged,
 }: TaskCardsProps) => {
   const [storedProfile] = useState(getStoredProfile);
   const [dialogTaskId, setDialogTaskId] = useState<string | null>(null);
+  const [mailConfirmTaskId, setMailConfirmTaskId] = useState<string | null>(null);
   const [firstName, setFirstName] = useState(storedProfile?.firstName ?? "");
   const [lastName, setLastName] = useState(storedProfile?.lastName ?? "");
   const [rememberMe, setRememberMe] = useState(Boolean(storedProfile));
@@ -285,6 +289,8 @@ export const TaskCards = ({
             const isOpen = task.status === "open";
             // const firstImage = task.images[0];
 
+            const isSendingEmail =
+              isBusy && taskBusy?.busyAction === Action.SendEmail;
             const isDeleting =
               isBusy && taskBusy?.busyAction === Action.DeleteTask;
             // const isUploading =
@@ -580,6 +586,20 @@ export const TaskCards = ({
                     <Button
                       type="button"
                       size="sm"
+                      variant="outline"
+                      onClick={() => setMailConfirmTaskId(task.id)}
+                      disabled={isBusy}
+                    >
+                      {isSendingEmail ? (
+                        <Spinner />
+                      ) : (
+                        <Mail className="size-4" aria-hidden="true" />
+                      )}
+                      Mail senden
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
                       variant="destructive"
                       onClick={() => onDeleteTask(task.id)}
                       disabled={isBusy}
@@ -760,6 +780,41 @@ export const TaskCards = ({
             </DialogContent>
           )
         ) : null}
+      </Dialog>
+
+      <Dialog
+        open={Boolean(mailConfirmTaskId)}
+        onOpenChange={(open) => {
+          if (!open) setMailConfirmTaskId(null);
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>E-Mail an Verteilerliste senden?</DialogTitle>
+            <DialogDescription>
+              Möchtest du wirklich eine Benachrichtigung zu diesem Arbeitseinsatz
+              an alle Personen in der Verteilerliste senden?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setMailConfirmTaskId(null)}
+            >
+              Abbrechen
+            </Button>
+            <Button
+              type="button"
+              onClick={() => {
+                if (mailConfirmTaskId) onSendEmail(mailConfirmTaskId);
+                setMailConfirmTaskId(null);
+              }}
+            >
+              Senden
+            </Button>
+          </DialogFooter>
+        </DialogContent>
       </Dialog>
     </>
   );
