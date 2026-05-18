@@ -126,7 +126,9 @@ export const TaskCards = ({
 }: TaskCardsProps) => {
   const [storedProfile] = useState(getStoredProfile);
   const [dialogTaskId, setDialogTaskId] = useState<string | null>(null);
-  const [mailConfirmTaskId, setMailConfirmTaskId] = useState<string | null>(null);
+  const [mailConfirmTaskId, setMailConfirmTaskId] = useState<string | null>(
+    null,
+  );
   const [firstName, setFirstName] = useState(storedProfile?.firstName ?? "");
   const [lastName, setLastName] = useState(storedProfile?.lastName ?? "");
   const [rememberMe, setRememberMe] = useState(Boolean(storedProfile));
@@ -644,9 +646,10 @@ export const TaskCards = ({
                   </div>
                   <ul className="grid gap-2">
                     <li>Du kannst diese Anmeldung jederzeit wieder ändern.</li>
-                    <li>
-                      Falls sich deine Daten ändern, bitte den Namen im Dialog
-                      anpassen.
+                    <li className="font-medium text-foreground">
+                      Melde dich bitte danach bei {TECHNICAL_CONTACT_NAME} oder{" "}
+                      {TECHNICAL_CONTACT_EMAIL}, um die Stunden zu
+                      dokumentieren.
                     </li>
                   </ul>
                 </div>
@@ -792,8 +795,8 @@ export const TaskCards = ({
           <DialogHeader>
             <DialogTitle>E-Mail an Verteilerliste senden?</DialogTitle>
             <DialogDescription>
-              Möchtest du wirklich eine Benachrichtigung zu diesem Arbeitseinsatz
-              an alle Personen in der Verteilerliste senden?
+              Möchtest du wirklich eine Benachrichtigung zu diesem
+              Arbeitseinsatz an alle Personen in der Verteilerliste senden?
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
