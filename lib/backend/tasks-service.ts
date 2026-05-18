@@ -1518,19 +1518,31 @@ export async function notifyTaskCreated(
     ["Max. Teilnehmer", task.maxParticipants?.toString() ?? null],
   ].filter((entry): entry is [string, string] => Boolean(entry[1]));
 
-  const htmlRows = taskDetails
-    .map(
-      ([label, value]) =>
-        `<tr><td style="padding:4px 12px 4px 0;font-weight:600;vertical-align:top;">${escapeHtml(label)}</td><td style="padding:4px 0;">${escapeHtml(value)}</td></tr>`,
-    )
-    .join("");
-
   const textLines = [
     "Neuer Arbeitseinsatz",
     "",
     ...taskDetails.map(([label, value]) => `${label}: ${value}`),
     ...(taskUrl ? ["", `Zur Seite: ${taskUrl}`] : []),
   ];
+
+  const dateDisplay = isTimeframe ? `${startDate} bis ${endDate}` : startDate;
+
+  const durationDisplay = task.durationEstimate
+    ? `${task.durationEstimate} ${task.durationEstimate === "1" ? "Stunde" : "Stunden"}`
+    : null;
+
+  const allInfoItems = [
+    task.materials ? `Werkzeug: ${escapeHtml(task.materials)}` : null,
+    dateDisplay ? `Zeitraum: ${escapeHtml(dateDisplay)}` : null,
+    durationDisplay ? `Dauer: ${escapeHtml(durationDisplay)}` : null,
+  ].filter((x): x is string => x !== null);
+
+  const infoHtml =
+    allInfoItems.length > 0
+      ? `<div style="margin-top:12px;">${allInfoItems.map((item) => `<p style="margin:0 0 4px;font-size:13px;color:#374151;">${item}</p>`).join("")}</div>`
+      : "";
+
+  const year = new Date().getFullYear();
 
   try {
     await Promise.all(
@@ -1541,23 +1553,42 @@ export async function notifyTaskCreated(
             ? `${baseUrl}/api/unsubscribe?email=${encodeURIComponent(recipient.email)}&token=${token}`
             : null;
 
-        const unsubscribeHtml = unsubscribeUrl
-          ? `<p style="margin:0;font-size:13px;color:#6b7280;">Du erhältst diese E-Mail, weil du in der Verteilerliste für Arbeitseinsätze eingetragen bist. <a href="${escapeHtml(unsubscribeUrl)}" style="color:#6b7280;">Abmelden</a></p>`
-          : `<p style="margin:0;font-size:13px;color:#6b7280;">Du erhältst diese E-Mail, weil du in der Verteilerliste für Arbeitseinsätze eingetragen bist.</p>`;
-
         const unsubscribeText = unsubscribeUrl
           ? `\n\nAbmelden: ${unsubscribeUrl}`
           : "";
 
-        const html = `
-    <div style="font-family:Arial,sans-serif;line-height:1.6;color:#111827;">
-      <h1 style="font-size:20px;margin:0 0 16px;">Neuer Arbeitseinsatz</h1>
-      <p style="margin:0 0 16px;">Ein neuer Arbeitseinsatz wurde eingetragen. Die Details:</p>
-      <table style="border-collapse:collapse;margin:0 0 16px;">${htmlRows}</table>
-      <p style="margin:0 0 16px;">Wenn du dich für diesen Einsatz eintragen möchtest, kannst du das direkt auf der ${taskUrl ? `<a href="${escapeHtml(taskUrl)}" style="color:#2563eb;">Webseite</a>` : "Webseite"} tun.</p>
-      ${unsubscribeHtml}
+        const footerLinks = [
+          baseUrl
+            ? `<a href="${escapeHtml(baseUrl)}" style="color:#374151;text-decoration:none;">tv-bellenberg.de</a>`
+            : null,
+          unsubscribeUrl
+            ? `<a href="${escapeHtml(unsubscribeUrl)}" style="color:#374151;text-decoration:none;">Abmelden</a>`
+            : null,
+        ]
+          .filter(Boolean)
+          .join(" &middot; ");
+
+        const html = `<div style="font-family:Arial,sans-serif;margin:0;padding:0;background:#f9fafb;">
+  <div style="padding:32px 24px;max-width:560px;">
+    <h1 style="font-size:24px;font-weight:700;margin:0 0 8px;color:#111827;">Neuer Arbeitseinsatz</h1>
+    <p style="color:#6b7280;margin:0 0 24px;font-size:15px;">Hallo, es wurde ein neuer Arbeitseinsatz eingetragen. Hier sind die Details:</p>
+    <div style="background:white;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin:0 0 24px;">
+      <table style="border-collapse:collapse;width:100%;"><tr>
+        <td style="padding:0;vertical-align:top;">
+          <span style="font-weight:700;font-size:16px;color:#111827;">${escapeHtml(task.title)}</span>
+        </td>
+      </tr></table>
+      <p style="color:#16a34a;font-size:14px;margin:8px 0 0;">${escapeHtml(task.description)}</p>
+      ${infoHtml}
     </div>
-  `;
+    ${taskUrl ? `<div style="margin:0 0 12px;"><a href="${escapeHtml(taskUrl)}" style="display:inline-block;background:#1a4d2e;color:white;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:600;font-size:16px;">Jetzt eintragen &#8594;</a></div>` : ""}
+  </div>
+  <div style="background:#f3f4f6;padding:20px 24px;text-align:center;border-top:1px solid #e5e7eb;">
+    <p style="margin:0 0 6px;font-size:13px;color:#6b7280;">Du erh&auml;ltst diese E-Mail, weil du in der Verteilerliste f&uuml;r Arbeitseins&auml;tze eingetragen bist.</p>
+    ${footerLinks ? `<p style="margin:0 0 6px;font-size:13px;color:#6b7280;">${footerLinks}</p>` : ""}
+    <p style="margin:0;font-size:12px;color:#9ca3af;">&copy; ${year} TV Bellenberg</p>
+  </div>
+</div>`;
 
         return resend.emails.send({
           from: "onboarding@resend.dev",
