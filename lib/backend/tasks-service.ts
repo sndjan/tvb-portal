@@ -1393,8 +1393,7 @@ export async function notifyParticipantRegistered(
   const subject = `Neue Anmeldung: ${task.title}`;
 
   const html = `
-    <style>@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600&display=swap');</style>
-    <div style="font-family:'DM Sans',Arial,sans-serif;line-height:1.6;color:#111827;">
+    <div style="font-family:Arial,sans-serif;line-height:1.6;color:#111827;">
       <h1 style="font-size:20px;margin:0 0 16px;">Neue Anmeldung</h1>
       <table style="border-collapse:collapse;margin:0 0 16px;">
         <tr><td style="padding:4px 12px 4px 0;font-weight:600;vertical-align:top;">Name</td><td style="padding:4px 0;">${escapeHtml(fullName)}</td></tr>
@@ -1437,8 +1436,7 @@ export async function notifyParticipantUnregistered(
   const subject = `Abmeldung: ${task.title}`;
 
   const html = `
-    <style>@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600&display=swap');</style>
-    <div style="font-family:'DM Sans',Arial,sans-serif;line-height:1.6;color:#111827;">
+    <div style="font-family:Arial,sans-serif;line-height:1.6;color:#111827;">
       <h1 style="font-size:20px;margin:0 0 16px;">Abmeldung</h1>
       <table style="border-collapse:collapse;margin:0 0 16px;">
         <tr><td style="padding:4px 12px 4px 0;font-weight:600;vertical-align:top;">Name</td><td style="padding:4px 0;">${escapeHtml(fullName)}</td></tr>
@@ -1556,8 +1554,7 @@ export async function notifyTaskCreated(
           : "";
 
         const html = `
-    <style>@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600&display=swap');</style>
-    <div style="font-family:'DM Sans',Arial,sans-serif;line-height:1.6;color:#111827;">
+    <div style="font-family:Arial,sans-serif;line-height:1.6;color:#111827;">
       <h1 style="font-size:20px;margin:0 0 16px;">Neuer Arbeitseinsatz</h1>
       <p style="margin:0 0 16px;">Ein neuer Arbeitseinsatz wurde eingetragen. Die Details:</p>
       <table style="border-collapse:collapse;margin:0 0 16px;">${htmlRows}</table>
