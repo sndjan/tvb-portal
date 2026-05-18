@@ -17,6 +17,7 @@ create table if not exists public.tasks (
   id uuid primary key default gen_random_uuid(),
   title text not null,
   description text not null,
+  materials text,
   start_date timestamptz,
   end_date timestamptz,
   duration_estimate text,

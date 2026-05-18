@@ -184,6 +184,7 @@ export function useHomeClient() {
       const payload = {
         title: createForm.title,
         description: createForm.description,
+        materials: createForm.materials.trim() || null,
         startDate: isRangeMode
           ? startDateInput || null
           : fromDateTimeLocalValue(startDateInput),
@@ -233,6 +234,7 @@ export function useHomeClient() {
     setEditForm({
       title: task.title,
       description: task.description,
+      materials: task.materials ?? "",
       scheduleType,
       rangeStartDate: scheduleType === "range" ? (task.startDate ?? "") : "",
       rangeEndDate: scheduleType === "range" ? (task.endDate ?? "") : "",
@@ -271,6 +273,7 @@ export function useHomeClient() {
         body: JSON.stringify({
           title: editForm.title,
           description: editForm.description,
+          materials: editForm.materials.trim() || null,
           startDate,
           endDate,
           durationEstimate: editForm.durationEstimate.trim() || null,

@@ -25,6 +25,7 @@ import {
   Trash2,
   UserPlus,
   Users,
+  Wrench,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "./ui/badge";
@@ -361,6 +362,12 @@ export const TaskCards = ({
                   </div>
                 ) : null}*/}
 
+                  {task.materials ? (
+                    <p className="flex items-center gap-2 text-muted-foreground">
+                      <Wrench className="size-4" aria-hidden="true" />
+                      {task.materials}
+                    </p>
+                  ) : null}
                   <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4 pb-4">
                     <p className="flex items-center gap-2 text-muted-foreground">
                       <CalendarDays className="size-4" aria-hidden="true" />

@@ -13,6 +13,7 @@ export function getDefaultTaskForm(): TaskFormState {
   return {
     title: "",
     description: "",
+    materials: "",
     scheduleType: "range",
     rangeStartDate: "",
     rangeEndDate: "",

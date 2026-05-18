@@ -19,6 +19,7 @@ export type TaskWithDetails = {
   id: string;
   title: string;
   description: string;
+  materials: string | null;
   startDate: string | null;
   endDate: string | null;
   durationEstimate: string | null;
@@ -44,6 +45,7 @@ export type EmailRecipient = {
 export type TaskFormState = {
   title: string;
   description: string;
+  materials: string;
   scheduleType: "range" | "start";
   rangeStartDate: string;
   rangeEndDate: string;

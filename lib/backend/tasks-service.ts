@@ -18,6 +18,7 @@ export type TaskRecord = {
   id: string;
   title: string;
   description: string;
+  materials: string | null;
   startDate: string | null;
   endDate: string | null;
   durationEstimate: string | null;
@@ -64,6 +65,7 @@ type TaskRow = {
   id: string | number;
   title: string | null;
   description: string | null;
+  materials: string | null;
   start_date: string | null;
   end_date: string | null;
   duration_estimate: string | number | null;
@@ -93,7 +95,7 @@ type ImageRow = {
 };
 
 const TASK_SELECT_COLUMNS =
-  "id, title, description, start_date, end_date, duration_estimate, max_participants, status, is_hidden, created_at";
+  "id, title, description, materials, start_date, end_date, duration_estimate, max_participants, status, is_hidden, created_at";
 
 const optionalMaxParticipantsSchema = z.preprocess((value) => {
   if (value === undefined || value === null || value === "") {
@@ -130,6 +132,7 @@ const optionalBooleanSchema = z.preprocess((value) => {
 const createTaskBodySchema = z.object({
   title: z.string().trim().min(1).max(160),
   description: z.string().trim().min(1).max(4000),
+  materials: z.string().trim().max(2000).nullable().optional(),
   startDate: z.string().trim().max(80).nullable().optional(),
   endDate: z.string().trim().max(80).nullable().optional(),
   durationEstimate: z.string().trim().max(120).nullable().optional(),
@@ -167,6 +170,7 @@ const removeEmailRecipientBodySchema = z.object({
 export type CreateTaskInput = {
   title: string;
   description: string;
+  materials: string | null;
   startDate: string | null;
   endDate: string | null;
   durationEstimate: string | null;
@@ -276,6 +280,7 @@ export function parseCreateTaskInput(input: unknown): CreateTaskInput {
   return {
     title: normalizeWhitespace(payload.title),
     description: normalizeWhitespace(payload.description),
+    materials: normalizeOptionalText(payload.materials),
     startDate,
     endDate,
     durationEstimate: normalizeOptionalText(payload.durationEstimate),
@@ -335,6 +340,10 @@ export function parseUpdateTaskInput(input: unknown): UpdateTaskInput {
     const nextStart = normalized.startDate ?? null;
     const nextEnd = normalized.endDate ?? null;
     validateStartAndEndDate(nextStart, nextEnd);
+  }
+
+  if (Object.prototype.hasOwnProperty.call(payload, "materials")) {
+    normalized.materials = normalizeOptionalText(payload.materials);
   }
 
   if (Object.prototype.hasOwnProperty.call(payload, "durationEstimate")) {
@@ -427,6 +436,7 @@ function mapTaskRow(row: TaskRow): TaskRecord {
     id: String(row.id),
     title: row.title?.trim() || "Unbenannter Einsatz",
     description: row.description?.trim() || "Keine Beschreibung vorhanden.",
+    materials: row.materials?.trim() || null,
     startDate: row.start_date,
     endDate: row.end_date,
     durationEstimate:
@@ -723,6 +733,7 @@ export async function createTask(input: CreateTaskInput): Promise<TaskRecord> {
     .insert({
       title: input.title,
       description: input.description,
+      materials: input.materials,
       start_date: input.startDate,
       end_date: input.endDate,
       duration_estimate: input.durationEstimate,
@@ -783,6 +794,7 @@ export async function updateTask(
   const updatePayload: {
     title?: string;
     description?: string;
+    materials?: string | null;
     start_date?: string | null;
     end_date?: string | null;
     duration_estimate?: string | null;
@@ -797,6 +809,10 @@ export async function updateTask(
 
   if (Object.prototype.hasOwnProperty.call(input, "description")) {
     updatePayload.description = input.description;
+  }
+
+  if (Object.prototype.hasOwnProperty.call(input, "materials")) {
+    updatePayload.materials = input.materials ?? null;
   }
 
   if (Object.prototype.hasOwnProperty.call(input, "startDate")) {

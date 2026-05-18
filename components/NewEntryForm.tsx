@@ -54,6 +54,17 @@ export const TaskForm = ({
           required
         />
       </label>
+      <label className="grid gap-1 text-xs text-muted-foreground">
+        Werkzeuge (optional)
+        <Textarea
+          className={`${baseFieldClass} min-h-20`}
+          placeholder="z. B. Rasenmäher, Heckenschere – für Zugangscodes bitte beim Technischen Leiter melden"
+          value={form.materials}
+          onChange={(event) =>
+            setForm({ ...form, materials: event.target.value })
+          }
+        />
+      </label>
 
       <div className="grid gap-2">
         <label className="grid gap-1 text-xs text-muted-foreground">
