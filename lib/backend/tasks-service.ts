@@ -1388,7 +1388,7 @@ export async function notifyParticipantRegistered(
   }
 
   const resend = new Resend(resendApiKey);
-  const fullName = `${participant.firstName} ${participant.lastName}`;
+  // const fullName = `${participant.firstName} ${participant.lastName}`;
   const registeredAt = formatDateTime(participant.createdAt);
   const subject = `Neue Anmeldung: ${task.title}`;
 
@@ -1396,14 +1396,13 @@ export async function notifyParticipantRegistered(
     <div style="font-family:Arial,sans-serif;line-height:1.6;color:#111827;">
       <h1 style="font-size:20px;margin:0 0 16px;">Neue Anmeldung</h1>
       <table style="border-collapse:collapse;margin:0 0 16px;">
-        <tr><td style="padding:4px 12px 4px 0;font-weight:600;vertical-align:top;">Name</td><td style="padding:4px 0;">${escapeHtml(fullName)}</td></tr>
         <tr><td style="padding:4px 12px 4px 0;font-weight:600;vertical-align:top;">Einsatz</td><td style="padding:4px 0;">${escapeHtml(task.title)}</td></tr>
         <tr><td style="padding:4px 12px 4px 0;font-weight:600;vertical-align:top;">Angemeldet am</td><td style="padding:4px 0;">${escapeHtml(registeredAt)}</td></tr>
       </table>
     </div>
   `;
 
-  const text = `Neue Anmeldung\n\nName: ${fullName}\nEinsatz: ${task.title}\nAngemeldet am: ${registeredAt}`;
+  const text = `Neue Anmeldung\n\nEinsatz: ${task.title}\nAngemeldet am: ${registeredAt}`;
 
   try {
     await resend.emails.send({
@@ -1420,8 +1419,6 @@ export async function notifyParticipantRegistered(
 
 export async function notifyParticipantUnregistered(
   task: TaskRecord,
-  firstName: string,
-  lastName: string,
 ): Promise<void> {
   const contactEmail = process.env.NEXT_PUBLIC_TECHNICAL_CONTACT_EMAIL?.trim();
   const resendApiKey = process.env.RESEND_API_KEY?.trim();
@@ -1431,7 +1428,7 @@ export async function notifyParticipantUnregistered(
   }
 
   const resend = new Resend(resendApiKey);
-  const fullName = `${firstName} ${lastName}`;
+  // const fullName = `${firstName} ${lastName}`;
   const unregisteredAt = formatDateTime(new Date().toISOString());
   const subject = `Abmeldung: ${task.title}`;
 
@@ -1439,14 +1436,13 @@ export async function notifyParticipantUnregistered(
     <div style="font-family:Arial,sans-serif;line-height:1.6;color:#111827;">
       <h1 style="font-size:20px;margin:0 0 16px;">Abmeldung</h1>
       <table style="border-collapse:collapse;margin:0 0 16px;">
-        <tr><td style="padding:4px 12px 4px 0;font-weight:600;vertical-align:top;">Name</td><td style="padding:4px 0;">${escapeHtml(fullName)}</td></tr>
         <tr><td style="padding:4px 12px 4px 0;font-weight:600;vertical-align:top;">Einsatz</td><td style="padding:4px 0;">${escapeHtml(task.title)}</td></tr>
         <tr><td style="padding:4px 12px 4px 0;font-weight:600;vertical-align:top;">Abgemeldet am</td><td style="padding:4px 0;">${escapeHtml(unregisteredAt)}</td></tr>
       </table>
     </div>
   `;
 
-  const text = `Abmeldung\n\nName: ${fullName}\nEinsatz: ${task.title}\nAbgemeldet am: ${unregisteredAt}`;
+  const text = `Abmeldung\n\nEinsatz: ${task.title}\nAbgemeldet am: ${unregisteredAt}`;
 
   try {
     await resend.emails.send({

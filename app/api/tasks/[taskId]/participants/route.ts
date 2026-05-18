@@ -99,7 +99,7 @@ export async function DELETE(
 
     const task = await getTaskById(id, false);
     if (task) {
-      void notifyParticipantUnregistered(task, input.firstName, input.lastName);
+      void notifyParticipantUnregistered(task);
     }
 
     return Response.json({ ok: true });

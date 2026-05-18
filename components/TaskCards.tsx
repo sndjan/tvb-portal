@@ -49,40 +49,9 @@ import {
 import { Input } from "./ui/input";
 import { Spinner } from "./ui/spinner";
 
-const STORAGE_KEY = "tvb-registration-profile";
 const TECHNICAL_CONTACT_NAME = process.env.NEXT_PUBLIC_TECHNICAL_CONTACT_NAME;
 const TECHNICAL_CONTACT_EMAIL = process.env.NEXT_PUBLIC_TECHNICAL_CONTACT_EMAIL;
 
-function getStoredProfile(): { firstName: string; lastName: string } | null {
-  if (typeof window === "undefined") {
-    return null;
-  }
-
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-
-    if (!raw) {
-      return null;
-    }
-
-    const parsed = JSON.parse(raw) as {
-      firstName?: string;
-      lastName?: string;
-    };
-
-    if (!parsed.firstName || !parsed.lastName) {
-      return null;
-    }
-
-    return {
-      firstName: parsed.firstName,
-      lastName: parsed.lastName,
-    };
-  } catch {
-    localStorage.removeItem(STORAGE_KEY);
-    return null;
-  }
-}
 
 type TaskCardsProps = {
   tasks: TaskWithDetails[];
@@ -125,14 +94,12 @@ export const TaskCards = ({
   onSendEmail,
   onParticipantsChanged,
 }: TaskCardsProps) => {
-  const [storedProfile] = useState(getStoredProfile);
   const [dialogTaskId, setDialogTaskId] = useState<string | null>(null);
   const [mailConfirmTaskId, setMailConfirmTaskId] = useState<string | null>(
     null,
   );
-  const [firstName, setFirstName] = useState(storedProfile?.firstName ?? "");
-  const [lastName, setLastName] = useState(storedProfile?.lastName ?? "");
-  const [rememberMe, setRememberMe] = useState(Boolean(storedProfile));
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [isCheckingRegistration, setIsCheckingRegistration] = useState(false);
   const [isRegistrationSubmitting, setIsRegistrationSubmitting] =
     useState(false);
@@ -144,24 +111,6 @@ export const TaskCards = ({
     [tasks, dialogTaskId],
   );
 
-  function persistProfile(
-    nextFirstName: string,
-    nextLastName: string,
-    shouldRemember = rememberMe,
-  ) {
-    if (!shouldRemember) {
-      localStorage.removeItem(STORAGE_KEY);
-      return;
-    }
-
-    localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify({
-        firstName: nextFirstName.trim(),
-        lastName: nextLastName.trim(),
-      }),
-    );
-  }
 
   async function checkRegistration(taskId: string, fn: string, ln: string) {
     const normalizedFirstName = fn.trim();
@@ -214,7 +163,6 @@ export const TaskCards = ({
         }),
       });
 
-      persistProfile(normalizedFirstName, normalizedLastName);
       setIsRegistered(true);
       setShowRegistrationSuccess(true);
       toast.success("Erfolgreich angemeldet.");
@@ -246,7 +194,6 @@ export const TaskCards = ({
         }),
       });
 
-      persistProfile(normalizedFirstName, normalizedLastName);
       setIsRegistered(false);
       setShowRegistrationSuccess(false);
       toast.success("Abmeldung erfolgreich.");
