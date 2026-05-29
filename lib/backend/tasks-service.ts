@@ -167,6 +167,10 @@ const removeEmailRecipientBodySchema = z.object({
   id: z.union([z.string(), z.number()]),
 });
 
+const toggleEmailRecipientBodySchema = z.object({
+  email: z.string().trim().email().max(320),
+});
+
 export type CreateTaskInput = {
   title: string;
   description: string;
@@ -201,6 +205,19 @@ export type AddEmailRecipientInput = {
 export type RemoveEmailRecipientInput = {
   id: string;
 };
+
+export type ToggleEmailRecipientInput = {
+  email: string;
+};
+
+export type ToggleEmailRecipientResult = {
+  action: "subscribed" | "unsubscribed";
+  email: string;
+};
+
+export type ToggleParticipantResult =
+  | { action: "registered"; participant: ParticipantRecord }
+  | { action: "unregistered" };
 
 function normalizeWhitespace(value: string): string {
   return value.trim().replace(/\s+/g, " ");
@@ -428,6 +445,20 @@ export function parseRemoveEmailRecipientInput(
 
   return {
     id: String(parsed.data.id),
+  };
+}
+
+export function parseToggleEmailRecipientInput(
+  input: unknown,
+): ToggleEmailRecipientInput {
+  const parsed = toggleEmailRecipientBodySchema.safeParse(input);
+
+  if (!parsed.success) {
+    throw toValidationError(parsed.error);
+  }
+
+  return {
+    email: parsed.data.email.toLowerCase(),
   };
 }
 
@@ -1333,6 +1364,62 @@ export async function removeEmailRecipient(
   if (!data || data.length === 0) {
     throw new HttpError(404, "E-Mail nicht gefunden", "email_not_found");
   }
+}
+
+export async function toggleEmailRecipient(
+  input: ToggleEmailRecipientInput,
+): Promise<ToggleEmailRecipientResult> {
+  const supabase = getSupabaseServiceClientOrThrow();
+  const email = input.email.toLowerCase();
+
+  const { data: existing, error: selectError } = await supabase
+    .from("email_list")
+    .select("id")
+    .eq("email", email)
+    .limit(1);
+
+  if (selectError) {
+    throw new HttpError(
+      500,
+      "E-Mail Verteiler konnte nicht geprüft werden",
+      "email_list_fetch_failed",
+    );
+  }
+
+  if (existing && existing.length > 0) {
+    const { error: deleteError } = await supabase
+      .from("email_list")
+      .delete()
+      .eq("email", email);
+
+    if (deleteError) {
+      throw new HttpError(
+        500,
+        "E-Mail konnte nicht ausgetragen werden",
+        "email_delete_failed",
+      );
+    }
+
+    return { action: "unsubscribed", email };
+  }
+
+  const { error: insertError } = await supabase
+    .from("email_list")
+    .insert({ email });
+
+  if (insertError) {
+    if (insertError.code === "23505") {
+      return { action: "subscribed", email };
+    }
+
+    throw new HttpError(
+      500,
+      "E-Mail konnte nicht eingetragen werden",
+      "email_insert_failed",
+    );
+  }
+
+  return { action: "subscribed", email };
 }
 
 export async function removeEmailRecipientByEmail(

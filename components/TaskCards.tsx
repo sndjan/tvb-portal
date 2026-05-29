@@ -11,7 +11,6 @@ import {
   TaskWithDetails,
 } from "@/lib/types";
 import { baseFieldClass, formatDateRange, toMessage } from "@/lib/utils";
-import { TaskForm } from "./NewEntryForm";
 import {
   CalendarDays,
   Check,
@@ -28,6 +27,7 @@ import {
   Wrench,
 } from "lucide-react";
 import { toast } from "sonner";
+import { TaskForm } from "./NewEntryForm";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import {
@@ -51,7 +51,6 @@ import { Spinner } from "./ui/spinner";
 
 const TECHNICAL_CONTACT_NAME = process.env.NEXT_PUBLIC_TECHNICAL_CONTACT_NAME;
 const TECHNICAL_CONTACT_EMAIL = process.env.NEXT_PUBLIC_TECHNICAL_CONTACT_EMAIL;
-
 
 type TaskCardsProps = {
   tasks: TaskWithDetails[];
@@ -110,7 +109,6 @@ export const TaskCards = ({
     () => tasks.find((task) => task.id === dialogTaskId) ?? null,
     [tasks, dialogTaskId],
   );
-
 
   async function checkRegistration(taskId: string, fn: string, ln: string) {
     const normalizedFirstName = fn.trim();
@@ -588,8 +586,7 @@ export const TaskCards = ({
               <DialogHeader>
                 <DialogTitle>Anmeldung erfolgreich</DialogTitle>
                 <DialogDescription>
-                  Deine Anmeldung für &quot;{dialogTask.title}&quot; wurde
-                  gespeichert.
+                  Du hast dich für &quot;{dialogTask.title}&quot; angemeldet.
                 </DialogDescription>
               </DialogHeader>
               <div className="grid gap-4">
@@ -599,7 +596,7 @@ export const TaskCards = ({
                     <p className="font-medium text-foreground">Infos</p>
                   </div>
                   <ul className="grid gap-2">
-                    <li>Du kannst diese Anmeldung jederzeit wieder ändern.</li>
+                    <li>Du kannst dich jederzeit wieder abmelden.</li>
                     <li className="font-medium text-foreground">
                       Melde dich bitte danach bei {TECHNICAL_CONTACT_NAME} oder{" "}
                       {TECHNICAL_CONTACT_EMAIL}, um die Stunden zu
@@ -639,17 +636,17 @@ export const TaskCards = ({
                 <DialogTitle>An- / Abmeldung</DialogTitle>
                 <DialogDescription>
                   {dialogTask
-                    ? `Melde dich für "${dialogTask.title}" an oder wieder ab.`
+                    ? `Gib deinen Namen ein, um dich für "${dialogTask.title}" anzumelden, oder falls bereits angemeldet, abzumelden.`
                     : ""}
                 </DialogDescription>
               </DialogHeader>
               <div className="grid gap-3">
-                <p className="text-sm text-muted-foreground">
+                {/* <p className="text-sm text-muted-foreground">
                   Aktuelle Anmeldungen: {dialogTask.participantCount}
                   {dialogTask.maxParticipants !== null
                     ? ` / ${dialogTask.maxParticipants}`
                     : ""}
-                </p>
+                </p> */}
 
                 <Input
                   className={baseFieldClass}
@@ -703,10 +700,6 @@ export const TaskCards = ({
               </div>
               <DialogFooter>
                 <>
-                  <Button type="button" variant="outline" onClick={closeDialog}>
-                    Schließen
-                  </Button>
-
                   {isRegistered ? (
                     <Button
                       type="button"

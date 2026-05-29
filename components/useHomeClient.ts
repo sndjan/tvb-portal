@@ -46,6 +46,9 @@ export function useHomeClient() {
     useState(false);
   const [emailInput, setEmailInput] = useState("");
 
+  const [optInEmail, setOptInEmail] = useState("");
+  const [isTogglingOptIn, setIsTogglingOptIn] = useState(false);
+
   const [pendingUploads, setPendingUploads] = useState<
     Record<string, PendingUpload>
   >({});
@@ -502,6 +505,41 @@ export function useHomeClient() {
     }
   }
 
+  async function handleToggleOptIn(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    const normalized = optInEmail.trim().toLowerCase();
+
+    if (!normalized) {
+      toast.error("Bitte eine E-Mail eingeben.");
+      return;
+    }
+
+    setIsTogglingOptIn(true);
+
+    try {
+      const result = await requestJson<{
+        action: "subscribed" | "unsubscribed";
+        email: string;
+      }>("/api/email-list/toggle", {
+        method: "POST",
+        body: JSON.stringify({ email: normalized }),
+      });
+
+      setOptInEmail("");
+
+      if (result.action === "subscribed") {
+        toast.success("E-Mail eingetragen.");
+      } else {
+        toast.success("E-Mail ausgetragen.");
+      }
+    } catch (error) {
+      toast.error(toMessage(error));
+    } finally {
+      setIsTogglingOptIn(false);
+    }
+  }
+
   async function handleRemoveEmailRecipient(id: string) {
     setIsLoadingEmailRecipients(true);
 
@@ -561,6 +599,10 @@ export function useHomeClient() {
     handleSendTaskEmail,
     handleAddEmailRecipient,
     handleRemoveEmailRecipient,
+    optInEmail,
+    setOptInEmail,
+    isTogglingOptIn,
+    handleToggleOptIn,
     onCancelEdit: () => {
       setEditingTaskId(null);
       setEditForm(null);

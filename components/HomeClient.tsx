@@ -4,6 +4,7 @@ import { LogOut } from "lucide-react";
 
 import { LoginForm } from "@/components/LoginForm";
 import { MailingList } from "@/components/MailingList";
+import { MailingListOptIn } from "@/components/MailingListOptIn";
 import { TaskForm } from "@/components/NewEntryForm";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -74,6 +75,10 @@ export function HomeClient() {
     handleSendTaskEmail,
     handleAddEmailRecipient,
     handleRemoveEmailRecipient,
+    optInEmail,
+    setOptInEmail,
+    isTogglingOptIn,
+    handleToggleOptIn,
     onCancelEdit,
   } = useHomeClient();
 
@@ -138,6 +143,15 @@ export function HomeClient() {
               handleRemoveEmailRecipient={handleRemoveEmailRecipient}
             />
           </div>
+        ) : null}
+
+        {!isAdmin ? (
+          <MailingListOptIn
+            emailInput={optInEmail}
+            setEmailInput={setOptInEmail}
+            isPending={isTogglingOptIn}
+            onSubmit={handleToggleOptIn}
+          />
         ) : null}
 
         <Tabs
