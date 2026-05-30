@@ -308,8 +308,8 @@ export const TaskCards = ({
                 ) : null}*/}
 
                   {task.materials ? (
-                    <p className="flex items-center gap-2 text-muted-foreground">
-                      <Wrench className="size-4" aria-hidden="true" />
+                    <p className="flex items-start gap-2 text-muted-foreground">
+                      <Wrench className="size-4 shrink-0 mt-1" aria-hidden="true" />
                       {task.materials}
                     </p>
                   ) : null}
