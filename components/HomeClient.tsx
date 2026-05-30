@@ -4,7 +4,6 @@ import { LogOut } from "lucide-react";
 
 import { LoginForm } from "@/components/LoginForm";
 import { MailingList } from "@/components/MailingList";
-import { MailingListOptIn } from "@/components/MailingListOptIn";
 import { TaskForm } from "@/components/NewEntryForm";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -12,8 +11,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TaskStatus } from "@/lib/types";
 import { Footer } from "./Footer";
 import { TaskCards } from "./TaskCards";
-import { useHomeClient } from "./useHomeClient";
 import { Spinner } from "./ui/spinner";
+import { useHomeClient } from "./useHomeClient";
 
 function EmptyState() {
   return (
@@ -56,6 +55,8 @@ export function HomeClient() {
     isLoadingEmailRecipients,
     emailInput,
     setEmailInput,
+    nameInput,
+    setNameInput,
     pendingUploads,
     openTasks,
     doneTasks,
@@ -75,10 +76,6 @@ export function HomeClient() {
     handleSendTaskEmail,
     handleAddEmailRecipient,
     handleRemoveEmailRecipient,
-    optInEmail,
-    setOptInEmail,
-    isTogglingOptIn,
-    handleToggleOptIn,
     onCancelEdit,
   } = useHomeClient();
 
@@ -137,6 +134,8 @@ export function HomeClient() {
             <MailingList
               emailInput={emailInput}
               setEmailInput={setEmailInput}
+              nameInput={nameInput}
+              setNameInput={setNameInput}
               emailRecipients={emailRecipients}
               isLoadingEmailRecipients={isLoadingEmailRecipients}
               handleAddEmailRecipient={handleAddEmailRecipient}
@@ -145,14 +144,14 @@ export function HomeClient() {
           </div>
         ) : null}
 
-        {!isAdmin ? (
+        {/* {!isAdmin ? (
           <MailingListOptIn
             emailInput={optInEmail}
             setEmailInput={setOptInEmail}
             isPending={isTogglingOptIn}
             onSubmit={handleToggleOptIn}
           />
-        ) : null}
+        ) : null} */}
 
         <Tabs
           value={activeTab}

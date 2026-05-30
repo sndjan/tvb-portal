@@ -66,12 +66,18 @@ create table if not exists public.images (
 create table if not exists public.email_list (
   id uuid primary key default gen_random_uuid(),
   email text not null,
+  first_name text,
+  last_name text,
   created_at timestamptz not null default now(),
   constraint email_list_email_unique unique (email),
   constraint email_list_email_valid check (
     email ~* '^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$'
   )
 );
+
+alter table public.email_list
+  add column if not exists first_name text,
+  add column if not exists last_name text;
 
 alter table public.tasks enable row level security;
 alter table public.self_registered_participants enable row level security;

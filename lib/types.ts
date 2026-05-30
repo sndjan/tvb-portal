@@ -40,6 +40,8 @@ export type TasksResponse = {
 export type EmailRecipient = {
   id: string;
   email: string;
+  firstName: string | null;
+  lastName: string | null;
 };
 
 export type TaskFormState = {

@@ -10,18 +10,37 @@ import {
 } from "./ui/card";
 import { Input } from "./ui/input";
 
+type Recipient = {
+  id: string;
+  email: string;
+  firstName: string | null;
+  lastName: string | null;
+};
+
 type MailingListProps = {
   emailInput: string;
   setEmailInput: (email: string) => void;
-  emailRecipients: { id: string; email: string }[];
+  nameInput: string;
+  setNameInput: (name: string) => void;
+  emailRecipients: Recipient[];
   isLoadingEmailRecipients: boolean;
   handleAddEmailRecipient: (event: React.SubmitEvent<HTMLFormElement>) => void;
   handleRemoveEmailRecipient: (id: string) => void;
 };
 
+function formatRecipient(recipient: Recipient): string {
+  const parts: string[] = [];
+  if (recipient.lastName) parts.push(recipient.lastName);
+  if (recipient.firstName) parts.push(recipient.firstName);
+  const name = parts.join(" ");
+  return name ? `${name} (${recipient.email})` : recipient.email;
+}
+
 export const MailingList = ({
   emailInput,
   setEmailInput,
+  nameInput,
+  setNameInput,
   emailRecipients,
   isLoadingEmailRecipients,
   handleAddEmailRecipient,
@@ -39,25 +58,35 @@ export const MailingList = ({
         </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-3">
-        <form onSubmit={handleAddEmailRecipient} className="flex gap-2">
+        <form onSubmit={handleAddEmailRecipient} className="grid gap-2">
           <Input
-            type="email"
+            type="text"
             className={baseFieldClass}
-            placeholder="email@beispiel.de"
-            value={emailInput}
-            onChange={(event) => setEmailInput(event.target.value)}
+            placeholder="Nachname und Vorname"
+            value={nameInput}
+            onChange={(event) => setNameInput(event.target.value)}
             required
           />
-          <Button
-            type="submit"
-            variant={"outline"}
-            disabled={isLoadingEmailRecipients}
-          >
-            <Plus className="size-4" aria-hidden="true" />
-          </Button>
+          <div className="flex gap-2">
+            <Input
+              type="email"
+              className={baseFieldClass}
+              placeholder="email@beispiel.de"
+              value={emailInput}
+              onChange={(event) => setEmailInput(event.target.value)}
+              required
+            />
+            <Button
+              type="submit"
+              variant={"outline"}
+              disabled={isLoadingEmailRecipients}
+            >
+              <Plus className="size-4" aria-hidden="true" />
+            </Button>
+          </div>
         </form>
 
-        <div className="max-h-90 space-y-2 overflow-auto pr-1">
+        <div className="max-h-110 space-y-2 overflow-auto pr-1">
           {emailRecipients.length === 0 && !isLoadingEmailRecipients ? (
             <p className="text-sm text-muted-foreground">
               Noch keine Empfänger hinterlegt.
@@ -69,7 +98,9 @@ export const MailingList = ({
               key={recipient.id}
               className="flex items-center justify-between gap-2 rounded-md border px-2 py-1.5 text-sm"
             >
-              <span className="truncate">{recipient.email}</span>
+              <span className="min-w-0 flex-1 break-all">
+                {formatRecipient(recipient)}
+              </span>
               <Button
                 type="button"
                 size="icon-xs"

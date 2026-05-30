@@ -45,6 +45,7 @@ export function useHomeClient() {
   const [isLoadingEmailRecipients, setIsLoadingEmailRecipients] =
     useState(false);
   const [emailInput, setEmailInput] = useState("");
+  const [nameInput, setNameInput] = useState("");
 
   const [optInEmail, setOptInEmail] = useState("");
   const [isTogglingOptIn, setIsTogglingOptIn] = useState(false);
@@ -477,12 +478,21 @@ export function useHomeClient() {
   ) {
     event.preventDefault();
 
-    const normalized = emailInput.trim().toLowerCase();
+    const normalizedEmail = emailInput.trim().toLowerCase();
+    const nameParts = nameInput.trim().split(/\s+/).filter(Boolean);
 
-    if (!normalized) {
+    if (!normalizedEmail) {
       toast.error("Bitte eine E-Mail eingeben.");
       return;
     }
+
+    if (nameParts.length < 2) {
+      toast.error("Bitte Nachname und Vorname eingeben.");
+      return;
+    }
+
+    const lastName = nameParts[0];
+    const firstName = nameParts.slice(1).join(" ");
 
     setIsLoadingEmailRecipients(true);
 
@@ -491,11 +501,16 @@ export function useHomeClient() {
         "/api/admin/email-list",
         {
           method: "POST",
-          body: JSON.stringify({ email: normalized }),
+          body: JSON.stringify({
+            email: normalizedEmail,
+            firstName,
+            lastName,
+          }),
         },
       );
 
       setEmailInput("");
+      setNameInput("");
       toast.success("E-Mail hinzugefuegt.");
       await refreshEmailRecipients();
     } catch (error) {
@@ -580,6 +595,8 @@ export function useHomeClient() {
     isLoadingEmailRecipients,
     emailInput,
     setEmailInput,
+    nameInput,
+    setNameInput,
     pendingUploads,
     openTasks,
     doneTasks,
