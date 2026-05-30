@@ -479,20 +479,17 @@ export function useHomeClient() {
     event.preventDefault();
 
     const normalizedEmail = emailInput.trim().toLowerCase();
-    const nameParts = nameInput.trim().split(/\s+/).filter(Boolean);
+    const normalizedName = nameInput.trim();
 
     if (!normalizedEmail) {
       toast.error("Bitte eine E-Mail eingeben.");
       return;
     }
 
-    if (nameParts.length < 2) {
-      toast.error("Bitte Nachname und Vorname eingeben.");
+    if (!normalizedName) {
+      toast.error("Bitte einen Namen eingeben.");
       return;
     }
-
-    const lastName = nameParts[0];
-    const firstName = nameParts.slice(1).join(" ");
 
     setIsLoadingEmailRecipients(true);
 
@@ -503,8 +500,7 @@ export function useHomeClient() {
           method: "POST",
           body: JSON.stringify({
             email: normalizedEmail,
-            firstName,
-            lastName,
+            name: normalizedName,
           }),
         },
       );

@@ -13,8 +13,7 @@ import { Input } from "./ui/input";
 type Recipient = {
   id: string;
   email: string;
-  firstName: string | null;
-  lastName: string | null;
+  name: string | null;
 };
 
 type MailingListProps = {
@@ -29,10 +28,7 @@ type MailingListProps = {
 };
 
 function formatRecipient(recipient: Recipient): string {
-  const parts: string[] = [];
-  if (recipient.lastName) parts.push(recipient.lastName);
-  if (recipient.firstName) parts.push(recipient.firstName);
-  const name = parts.join(" ");
+  const name = recipient.name?.trim() || "";
   return name ? `${name} (${recipient.email})` : recipient.email;
 }
 
@@ -62,7 +58,7 @@ export const MailingList = ({
           <Input
             type="text"
             className={baseFieldClass}
-            placeholder="Nachname und Vorname"
+            placeholder="Name"
             value={nameInput}
             onChange={(event) => setNameInput(event.target.value)}
             required

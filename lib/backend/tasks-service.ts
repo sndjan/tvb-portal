@@ -161,8 +161,7 @@ const removeParticipantBodySchema = z.object({
 
 const addEmailRecipientBodySchema = z.object({
   email: z.string().trim().email().max(320),
-  firstName: z.string().trim().min(1).max(80),
-  lastName: z.string().trim().min(1).max(80),
+  name: z.string().trim().min(1).max(160),
 });
 
 const removeEmailRecipientBodySchema = z.object({
@@ -202,15 +201,13 @@ export type RemoveParticipantInput = {
 
 export type AddEmailRecipientInput = {
   email: string;
-  firstName: string;
-  lastName: string;
+  name: string;
 };
 
 export type EmailRecipientRecord = {
   id: string;
   email: string;
-  firstName: string | null;
-  lastName: string | null;
+  name: string | null;
 };
 
 export type RemoveEmailRecipientInput = {
@@ -442,8 +439,7 @@ export function parseAddEmailRecipientInput(
 
   return {
     email: parsed.data.email.toLowerCase(),
-    firstName: normalizeWhitespace(parsed.data.firstName),
-    lastName: normalizeWhitespace(parsed.data.lastName),
+    name: normalizeWhitespace(parsed.data.name),
   };
 }
 
@@ -1296,7 +1292,7 @@ export async function listEmailRecipients(): Promise<EmailRecipientRecord[]> {
   const supabase = getSupabaseServiceClientOrThrow();
   const { data, error } = await supabase
     .from("email_list")
-    .select("id, email, first_name, last_name");
+    .select("id, email, name");
 
   if (error) {
     throw new HttpError(
@@ -1311,34 +1307,26 @@ export async function listEmailRecipients(): Promise<EmailRecipientRecord[]> {
       const r = row as {
         id: string | number;
         email: string;
-        first_name: string | null;
-        last_name: string | null;
+        name: string | null;
       };
-      const firstName = r.first_name?.trim() || null;
-      const lastName = r.last_name?.trim() || null;
+      const name = r.name?.trim() || null;
       return {
         id: String(r.id),
         email: String(r.email || "")
           .trim()
           .toLowerCase(),
-        firstName: firstName && firstName.length > 0 ? firstName : null,
-        lastName: lastName && lastName.length > 0 ? lastName : null,
+        name: name && name.length > 0 ? name : null,
       };
     })
     .filter((row) => row.email.length > 0);
 
   recipients.sort((a, b) => {
-    const aLast = (a.lastName ?? "").toLowerCase();
-    const bLast = (b.lastName ?? "").toLowerCase();
-    if (aLast !== bLast) {
-      if (aLast === "") return 1;
-      if (bLast === "") return -1;
-      return aLast.localeCompare(bLast, "de");
-    }
-    const aFirst = (a.firstName ?? "").toLowerCase();
-    const bFirst = (b.firstName ?? "").toLowerCase();
-    if (aFirst !== bFirst) {
-      return aFirst.localeCompare(bFirst, "de");
+    const aName = (a.name ?? "").toLowerCase();
+    const bName = (b.name ?? "").toLowerCase();
+    if (aName !== bName) {
+      if (aName === "") return 1;
+      if (bName === "") return -1;
+      return aName.localeCompare(bName, "de");
     }
     return a.email.localeCompare(b.email);
   });
@@ -1355,10 +1343,9 @@ export async function addEmailRecipient(
     .from("email_list")
     .insert({
       email: input.email,
-      first_name: input.firstName,
-      last_name: input.lastName,
+      name: input.name,
     })
-    .select("id, email, first_name, last_name")
+    .select("id, email, name")
     .single();
 
   if (error) {
@@ -1380,8 +1367,7 @@ export async function addEmailRecipient(
   const row = data as {
     id: string | number;
     email: string;
-    first_name: string | null;
-    last_name: string | null;
+    name: string | null;
   };
 
   return {
@@ -1389,8 +1375,7 @@ export async function addEmailRecipient(
     email: String(row.email || "")
       .trim()
       .toLowerCase(),
-    firstName: row.first_name?.trim() || null,
-    lastName: row.last_name?.trim() || null,
+    name: row.name?.trim() || null,
   };
 }
 
