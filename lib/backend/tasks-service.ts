@@ -2,7 +2,7 @@ import "server-only";
 
 import { createHmac, randomUUID, timingSafeEqual } from "node:crypto";
 
-import { Resend } from "resend";
+import nodemailer, { type Transporter } from "nodemailer";
 import { z } from "zod";
 
 import { HttpError } from "@/lib/backend/errors";
@@ -1516,19 +1516,62 @@ export function verifyUnsubscribeToken(email: string, token: string): boolean {
   }
 }
 
+const BREVO_SENDER_EMAIL = "info@tv-bellenberg.de";
+const BREVO_SENDER_NAME = "TV Bellenberg";
+const BREVO_SMTP_HOST = "smtp-relay.brevo.com";
+const BREVO_SMTP_PORT = 587;
+
+type BrevoEmail = {
+  to: string;
+  subject: string;
+  html: string;
+  text: string;
+  headers?: Record<string, string>;
+};
+
+let cachedTransporter: Transporter | null = null;
+
+function getBrevoTransporter(user: string, pass: string): Transporter {
+  if (!cachedTransporter) {
+    cachedTransporter = nodemailer.createTransport({
+      host: BREVO_SMTP_HOST,
+      port: BREVO_SMTP_PORT,
+      secure: false,
+      auth: { user, pass },
+    });
+  }
+  return cachedTransporter;
+}
+
+async function sendBrevoEmail(
+  user: string,
+  pass: string,
+  email: BrevoEmail,
+): Promise<void> {
+  const transporter = getBrevoTransporter(user, pass);
+  await transporter.sendMail({
+    from: { name: BREVO_SENDER_NAME, address: BREVO_SENDER_EMAIL },
+    to: email.to,
+    replyTo: { name: BREVO_SENDER_NAME, address: BREVO_SENDER_EMAIL },
+    subject: email.subject,
+    html: email.html,
+    text: email.text,
+    ...(email.headers ? { headers: email.headers } : {}),
+  });
+}
+
 export async function notifyParticipantRegistered(
   task: TaskRecord,
   participant: ParticipantRecord,
 ): Promise<void> {
   const contactEmail = process.env.NEXT_PUBLIC_TECHNICAL_CONTACT_EMAIL?.trim();
-  const resendApiKey = process.env.RESEND_API_KEY?.trim();
+  const smtpUser = process.env.BREVO_SMTP_USER?.trim();
+  const smtpPassword = process.env.BREVO_SMTP_PASSWORD?.trim();
 
-  if (!contactEmail || !resendApiKey) {
+  if (!contactEmail || !smtpUser || !smtpPassword) {
     return;
   }
 
-  const resend = new Resend(resendApiKey);
-  // const fullName = `${participant.firstName} ${participant.lastName}`;
   const registeredAt = formatDateTime(participant.createdAt);
   const subject = `Neue Anmeldung: ${task.title}`;
 
@@ -1545,8 +1588,7 @@ export async function notifyParticipantRegistered(
   const text = `Neue Anmeldung\n\nEinsatz: ${task.title}\nAngemeldet am: ${registeredAt}`;
 
   try {
-    await resend.emails.send({
-      from: "onboarding@resend.dev",
+    await sendBrevoEmail(smtpUser, smtpPassword, {
       to: contactEmail,
       subject,
       html,
@@ -1561,14 +1603,13 @@ export async function notifyParticipantUnregistered(
   task: TaskRecord,
 ): Promise<void> {
   const contactEmail = process.env.NEXT_PUBLIC_TECHNICAL_CONTACT_EMAIL?.trim();
-  const resendApiKey = process.env.RESEND_API_KEY?.trim();
+  const smtpUser = process.env.BREVO_SMTP_USER?.trim();
+  const smtpPassword = process.env.BREVO_SMTP_PASSWORD?.trim();
 
-  if (!contactEmail || !resendApiKey) {
+  if (!contactEmail || !smtpUser || !smtpPassword) {
     return;
   }
 
-  const resend = new Resend(resendApiKey);
-  // const fullName = `${firstName} ${lastName}`;
   const unregisteredAt = formatDateTime(new Date().toISOString());
   const subject = `Abmeldung: ${task.title}`;
 
@@ -1585,8 +1626,7 @@ export async function notifyParticipantUnregistered(
   const text = `Abmeldung\n\nEinsatz: ${task.title}\nAbgemeldet am: ${unregisteredAt}`;
 
   try {
-    await resend.emails.send({
-      from: "onboarding@resend.dev",
+    await sendBrevoEmail(smtpUser, smtpPassword, {
       to: contactEmail,
       subject,
       html,
@@ -1611,25 +1651,21 @@ export async function notifyTaskCreated(
     };
   }
 
-  const resendApiKey = process.env.RESEND_API_KEY?.trim();
+  const smtpUser = process.env.BREVO_SMTP_USER?.trim();
+  const smtpPassword = process.env.BREVO_SMTP_PASSWORD?.trim();
 
-  if (!resendApiKey) {
+  if (!smtpUser || !smtpPassword) {
     return {
       attempted: false,
       sent: false,
       recipientCount: recipients.length,
-      message: "RESEND_API_KEY ist nicht konfiguriert",
+      message: "BREVO_SMTP_USER/BREVO_SMTP_PASSWORD ist nicht konfiguriert",
     };
   }
 
-  const resend = new Resend(resendApiKey);
   const subject = `Neuer Arbeitseinsatz: ${task.title}`;
 
-  const baseUrl = (
-    process.env.NEXT_PUBLIC_BASE_URL || process.env.WEBSITE_BASE_URL
-  )
-    ?.trim()
-    .replace(/\/+$/, "");
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL?.trim().replace(/\/+$/, "");
   const taskUrl = baseUrl ? `${baseUrl}/` : null;
 
   let startDate = null;
@@ -1673,7 +1709,11 @@ export async function notifyTaskCreated(
 
   const allInfoItems = [
     task.materials ? `Werkzeug: ${escapeHtml(task.materials)}` : null,
-    dateDisplay ? `Zeitraum: ${escapeHtml(dateDisplay)}` : null,
+    dateDisplay && endDate
+      ? `Zeitraum: ${escapeHtml(dateDisplay)}`
+      : dateDisplay
+        ? `Start: ${escapeHtml(dateDisplay)}`
+        : null,
     durationDisplay ? `Dauer: ${escapeHtml(durationDisplay)}` : null,
   ].filter((x): x is string => x !== null);
 
@@ -1681,8 +1721,6 @@ export async function notifyTaskCreated(
     allInfoItems.length > 0
       ? `<div style="margin-top:12px;">${allInfoItems.map((item) => `<p style="margin:0 0 4px;font-size:13px;color:#374151;">${item}</p>`).join("")}</div>`
       : "";
-
-  const year = new Date().getFullYear();
 
   try {
     await Promise.all(
@@ -1693,22 +1731,7 @@ export async function notifyTaskCreated(
             ? `${baseUrl}/api/unsubscribe?email=${encodeURIComponent(recipient.email)}&token=${token}`
             : null;
 
-        const unsubscribeText = unsubscribeUrl
-          ? `\n\nAbmelden: ${unsubscribeUrl}`
-          : "";
-
-        const footerLinks = [
-          baseUrl
-            ? `<a href="${escapeHtml(baseUrl)}" style="color:#374151;text-decoration:none;">tv-bellenberg.de</a>`
-            : null,
-          unsubscribeUrl
-            ? `<a href="${escapeHtml(unsubscribeUrl)}" style="color:#374151;text-decoration:none;">Abmelden</a>`
-            : null,
-        ]
-          .filter(Boolean)
-          .join(" &middot; ");
-
-        const html = `<div style="font-family:Arial,sans-serif;margin:0;padding:0;background:#f9fafb;">
+        const html = `<div style="font-family:Arial,sans-serif;margin:0;padding:0;">
   <div style="padding:32px 24px;max-width:560px;">
     <h1 style="font-size:24px;font-weight:700;margin:0 0 8px;color:#111827;">Neuer Arbeitseinsatz</h1>
     <p style="color:#6b7280;margin:0 0 24px;font-size:15px;">Hallo, es wurde ein neuer Arbeitseinsatz eingetragen. Hier sind die Details:</p>
@@ -1718,24 +1741,26 @@ export async function notifyTaskCreated(
           <span style="font-weight:700;font-size:16px;color:#111827;">${escapeHtml(task.title)}</span>
         </td>
       </tr></table>
-      <p style="color:#16a34a;font-size:14px;margin:8px 0 0;">${escapeHtml(task.description)}</p>
+      <p style="font-size:14px;margin:8px 0 0;">${escapeHtml(task.description)}</p>
       ${infoHtml}
     </div>
     ${taskUrl ? `<div style="margin:0 0 12px;"><a href="${escapeHtml(taskUrl)}" style="display:inline-block;background:#1a4d2e;color:white;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:600;font-size:16px;">Jetzt eintragen &#8594;</a></div>` : ""}
   </div>
-  <div style="background:#f3f4f6;padding:20px 24px;text-align:center;border-top:1px solid #e5e7eb;">
-    <p style="margin:0 0 6px;font-size:13px;color:#6b7280;">Du erh&auml;ltst diese E-Mail, weil du in der Verteilerliste f&uuml;r Arbeitseins&auml;tze eingetragen bist.</p>
-    ${footerLinks ? `<p style="margin:0 0 6px;font-size:13px;color:#6b7280;">${footerLinks}</p>` : ""}
-    <p style="margin:0;font-size:12px;color:#9ca3af;">&copy; ${year} TV Bellenberg</p>
-  </div>
 </div>`;
 
-        return resend.emails.send({
-          from: "onboarding@resend.dev",
+        const headers: Record<string, string> | undefined = unsubscribeUrl
+          ? {
+              "List-Unsubscribe": `<${unsubscribeUrl}>`,
+              "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+            }
+          : undefined;
+
+        return sendBrevoEmail(smtpUser, smtpPassword, {
           to: recipient.email,
           subject,
           html,
-          text: textLines.join("\n") + unsubscribeText,
+          text: textLines.join("\n"),
+          headers,
         });
       }),
     );
