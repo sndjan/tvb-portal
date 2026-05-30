@@ -8,11 +8,8 @@ import {
 } from "@/lib/backend/route-helpers";
 import {
   addTaskParticipant,
-  getTaskById,
   hasTaskParticipant,
   listTaskParticipants,
-  notifyParticipantRegistered,
-  notifyParticipantUnregistered,
   parseAddParticipantInput,
   parseRemoveParticipantInput,
   removeTaskParticipant,
@@ -75,11 +72,6 @@ export async function POST(
     const input = parseAddParticipantInput(body);
     const participant = await addTaskParticipant(id, input);
 
-    const task = await getTaskById(id, false);
-    if (task) {
-      void notifyParticipantRegistered(task, participant);
-    }
-
     return Response.json({ participant }, { status: 201 });
   } catch (error) {
     return toRouteErrorResponse(error);
@@ -96,11 +88,6 @@ export async function DELETE(
     const body = await readJsonBody(request);
     const input = parseRemoveParticipantInput(body);
     await removeTaskParticipant(id, input);
-
-    const task = await getTaskById(id, false);
-    if (task) {
-      void notifyParticipantUnregistered(task);
-    }
 
     return Response.json({ ok: true });
   } catch (error) {

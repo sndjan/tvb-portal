@@ -718,11 +718,14 @@ export const TaskCards = ({
                         isRegistrationSubmitting ||
                         (dialogTask.maxParticipants !== null &&
                           dialogTask.participantCount >=
-                            dialogTask.maxParticipants)
+                            dialogTask.maxParticipants) ||
+                        isCheckingRegistration
                       }
                     >
-                      {isRegistrationSubmitting ? <Spinner /> : null}
-                      Anmelden
+                      {isRegistrationSubmitting || isCheckingRegistration ? (
+                        <Spinner />
+                      ) : null}
+                      {isCheckingRegistration ? "Prüfe..." : "Anmelden"}
                     </Button>
                   )}
                 </>
