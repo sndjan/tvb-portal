@@ -17,11 +17,7 @@ function getAdminPassword(): string {
 }
 
 function getAdminSessionSecret(): string {
-  return (
-    process.env.ADMIN_SESSION_SECRET?.trim() ||
-    process.env.SUPABASE_PRIVATE_KEY?.trim() ||
-    ""
-  );
+  return process.env.ADMIN_SESSION_SECRET?.trim() || "";
 }
 
 function getNowEpochSeconds() {

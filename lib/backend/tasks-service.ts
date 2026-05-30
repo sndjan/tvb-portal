@@ -1516,10 +1516,13 @@ export function verifyUnsubscribeToken(email: string, token: string): boolean {
   }
 }
 
-const BREVO_SENDER_EMAIL = "info@tv-bellenberg.de";
-const BREVO_SENDER_NAME = "TV Bellenberg";
-const BREVO_SMTP_HOST = "smtp-relay.brevo.com";
-const BREVO_SMTP_PORT = 587;
+const BREVO_SENDER_EMAIL =
+  process.env.BREVO_SENDER_EMAIL?.trim() || "info@tv-bellenberg.de";
+const BREVO_SENDER_NAME =
+  process.env.BREVO_SENDER_NAME?.trim() || "TV Bellenberg";
+const BREVO_SMTP_HOST =
+  process.env.BREVO_SMTP_HOST?.trim() || "smtp-relay.brevo.com";
+const BREVO_SMTP_PORT = Number(process.env.BREVO_SMTP_PORT?.trim()) || 587;
 
 type BrevoEmail = {
   to: string;
