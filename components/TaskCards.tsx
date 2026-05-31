@@ -427,7 +427,8 @@ export const TaskCards = ({
                                         </AlertDialogTitle>
                                         <AlertDialogDescription>
                                           {participant.firstName}{" "}
-                                          {participant.lastName} wird von &quot;
+                                          {participant.lastName}&nbsp;wird von
+                                          &quot;
                                           {task.title}&quot; abgemeldet. Diese
                                           Aktion kann nicht rückgängig gemacht
                                           werden.
