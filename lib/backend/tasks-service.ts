@@ -1288,6 +1288,70 @@ export async function deleteTaskImage(
   }
 }
 
+const BREVO_CONTACTS_URL_BASE = "https://api.brevo.com/v3/contacts/lists";
+
+async function listBrevoEmailRecipients(): Promise<EmailRecipientRecord[]> {
+  const apiKey = process.env.BREVO_API_KEY?.trim();
+  const listIdRaw = process.env.BREVO_LIST_ID?.trim();
+  const listId = Number(listIdRaw);
+
+  if (!apiKey) {
+    throw new HttpError(
+      500,
+      "BREVO_API_KEY ist nicht konfiguriert",
+      "config_missing",
+    );
+  }
+
+  if (!listIdRaw || !Number.isInteger(listId) || listId <= 0) {
+    throw new HttpError(
+      500,
+      "BREVO_LIST_ID ist nicht konfiguriert",
+      "config_missing",
+    );
+  }
+
+  const response = await fetch(
+    `${BREVO_CONTACTS_URL_BASE}/${listId}/contacts?limit=500`,
+    {
+      method: "GET",
+      headers: { accept: "application/json", "api-key": apiKey },
+      cache: "no-store",
+    },
+  );
+
+  if (!response.ok) {
+    throw new HttpError(
+      502,
+      `Brevo API Fehler (${response.status})`,
+      "brevo_error",
+    );
+  }
+
+  const data = (await response.json()) as {
+    contacts?: Array<{
+      id: number;
+      email: string;
+      attributes?: { VORNAME?: string | null; NACHNAME?: string | null } | null;
+    }>;
+  };
+
+  return (data.contacts ?? [])
+    .map((contact) => {
+      const vorname = contact.attributes?.VORNAME?.trim() || "";
+      const nachname = contact.attributes?.NACHNAME?.trim() || "";
+      const name = [vorname, nachname].filter(Boolean).join(" ").trim();
+      return {
+        id: String(contact.id),
+        email: String(contact.email || "")
+          .trim()
+          .toLowerCase(),
+        name: name.length > 0 ? name : null,
+      };
+    })
+    .filter((row) => row.email.length > 0);
+}
+
 export async function listEmailRecipients(): Promise<EmailRecipientRecord[]> {
   const supabase = getSupabaseServiceClientOrThrow();
   const { data, error } = await supabase
@@ -1628,7 +1692,7 @@ export async function notifyParticipantUnregistered(
 export async function notifyTaskCreated(
   task: TaskRecord,
 ): Promise<TaskNotificationResult> {
-  const recipients = await listEmailRecipients();
+  const recipients = await listBrevoEmailRecipients();
 
   if (recipients.length === 0) {
     return {
