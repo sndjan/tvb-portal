@@ -105,7 +105,7 @@ export const ExternalMailList = ({
           </SelectContent>
         </Select>
 
-        <div className="max-h-140 space-y-2 overflow-auto pr-1">
+        <div className="max-h-125 space-y-2 overflow-auto pr-1">
           {isLoading ? (
             <div className="flex items-center justify-center py-6">
               <Spinner />
