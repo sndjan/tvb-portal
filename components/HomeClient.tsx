@@ -2,8 +2,10 @@
 
 import { LogOut } from "lucide-react";
 
+import { ExternalMailList } from "@/components/ExternalMailList";
 import { LoginForm } from "@/components/LoginForm";
-import { MailingList } from "@/components/MailingList";
+// UNUSED: MailingList (manual recipient management) replaced by ExternalMailList
+// (Brevo list 11). Source kept at components/MailingList.tsx for reference.
 import { TaskForm } from "@/components/NewEntryForm";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -51,12 +53,10 @@ export function HomeClient() {
     editForm,
     setEditForm,
     busyTaskIds,
-    emailRecipients,
-    isLoadingEmailRecipients,
-    emailInput,
-    setEmailInput,
-    nameInput,
-    setNameInput,
+    // UNUSED: emailRecipients / emailInput / nameInput and related setters belong
+    // to the original manual MailingList. The hook still exposes them; we no
+    // longer destructure them here because the Brevo-backed ExternalMailList
+    // replaces that UI.
     pendingUploads,
     openTasks,
     doneTasks,
@@ -74,8 +74,9 @@ export function HomeClient() {
     handleUploadImages,
     handleDeleteImage,
     handleSendTaskEmail,
-    handleAddEmailRecipient,
-    handleRemoveEmailRecipient,
+    // UNUSED: handleAddEmailRecipient / handleRemoveEmailRecipient still exist
+    // in useHomeClient but are no longer wired up since ExternalMailList is
+    // read-only.
     onCancelEdit,
   } = useHomeClient();
 
@@ -131,16 +132,9 @@ export function HomeClient() {
               onSubmit={handleCreateTask}
             />
 
-            <MailingList
-              emailInput={emailInput}
-              setEmailInput={setEmailInput}
-              nameInput={nameInput}
-              setNameInput={setNameInput}
-              emailRecipients={emailRecipients}
-              isLoadingEmailRecipients={isLoadingEmailRecipients}
-              handleAddEmailRecipient={handleAddEmailRecipient}
-              handleRemoveEmailRecipient={handleRemoveEmailRecipient}
-            />
+            {/* UNUSED: <MailingList ... /> was previously rendered here.
+                Replaced by <ExternalMailList /> backed by Brevo list 11. */}
+            <ExternalMailList />
           </div>
         ) : null}
 

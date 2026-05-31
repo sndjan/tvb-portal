@@ -473,6 +473,10 @@ export function useHomeClient() {
     }
   }
 
+  // UNUSED: handleAddEmailRecipient / handleRemoveEmailRecipient and the related
+  // emailRecipients state belong to the old manually-managed MailingList.
+  // They are no longer wired up; ExternalMailList renders a read-only view of
+  // Brevo list 11 instead. Kept here for reference.
   async function handleAddEmailRecipient(
     event: React.SubmitEvent<HTMLFormElement>,
   ) {

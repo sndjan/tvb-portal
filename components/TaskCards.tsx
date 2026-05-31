@@ -350,16 +350,13 @@ export const TaskCards = ({
                           Angemeldete Teilnehmer
                         </h3>
                         {task.participants && task.participants.length > 0 ? (
-                          <ul className="grid gap-1 text-sm">
+                          <ol className="grid list-decimal gap-1 pl-6 text-sm">
                             {task.participants.map((participant) => (
-                              <li
-                                key={participant.id}
-                                className="rounded-md border px-2 py-1"
-                              >
+                              <li key={participant.id} className="px-2 py-1">
                                 {participant.firstName} {participant.lastName}
                               </li>
                             ))}
-                          </ul>
+                          </ol>
                         ) : (
                           <p className="text-sm text-muted-foreground">
                             Keine Teilnehmer vorhanden.

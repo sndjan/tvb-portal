@@ -1,3 +1,7 @@
+// UNUSED: This manually-managed mailing list has been replaced by ExternalMailList,
+// which reads contacts from Brevo list ID 11. The component, its API route
+// (app/api/admin/email-list), and the related state/handlers in useHomeClient
+// are intentionally kept for reference but are no longer rendered or invoked.
 import { baseFieldClass } from "@/lib/utils";
 import { Mail, Plus, Trash2 } from "lucide-react";
 import { Button } from "./ui/button";
