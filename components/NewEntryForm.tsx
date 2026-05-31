@@ -1,8 +1,9 @@
-import { TaskFormState, TaskStatus } from "@/lib/types";
+import { TaskFormState } from "@/lib/types";
 import { baseFieldClass } from "@/lib/utils";
 import { Plus, Save } from "lucide-react";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import { Checkbox } from "./ui/checkbox";
 import { Input } from "./ui/input";
 import {
   Select,
@@ -13,7 +14,6 @@ import {
 } from "./ui/select";
 import { Spinner } from "./ui/spinner";
 import { Textarea } from "./ui/textarea";
-import { Checkbox } from "./ui/checkbox";
 
 type TaskFormProps = {
   mode: "create" | "edit";
@@ -58,7 +58,7 @@ export const TaskForm = ({
         Werkzeuge (optional)
         <Textarea
           className={`${baseFieldClass} min-h-20`}
-          placeholder="z. B. Rasenmäher, Heckenschere – für Zugangscodes bitte beim Technischen Leiter melden"
+          placeholder="z. B. Rasenmäher, Heckenschere – für Zugang bitte beim Technischen Leiter melden"
           value={form.materials}
           onChange={(event) =>
             setForm({ ...form, materials: event.target.value })

@@ -1732,7 +1732,12 @@ export async function notifyTaskCreated(
       <p style="font-size:14px;margin:8px 0 0;">${escapeHtml(task.description)}</p>
       ${infoHtml}
     </div>
-    ${taskUrl ? `<div style="margin:0 0 12px;"><a href="${escapeHtml(taskUrl)}" style="display:inline-block;background:#1a4d2e;color:white;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:600;font-size:16px;">Jetzt eintragen &#8594;</a></div>` : ""}
+    ${
+      taskUrl
+        ? `<div style="margin:0 0 12px;"><a href="${escapeHtml(taskUrl)}" style="display:inline-block;background:#1a4d2e;color:white;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:600;font-size:16px;">Jetzt eintragen &#8594;</a></div>
+    <p style="margin:0 0 12px;font-size:12px;color:#6b7280;">Die Seite kann auch &uuml;ber die tv-bellenberg.de Homepage erreicht werden.</p>`
+        : ""
+    }
   </div>
 </div>`;
 

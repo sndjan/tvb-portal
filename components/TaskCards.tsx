@@ -309,7 +309,10 @@ export const TaskCards = ({
 
                   {task.materials ? (
                     <p className="flex items-start gap-2 text-muted-foreground">
-                      <Wrench className="size-4 shrink-0 mt-1" aria-hidden="true" />
+                      <Wrench
+                        className="size-4 shrink-0 mt-1"
+                        aria-hidden="true"
+                      />
                       {task.materials}
                     </p>
                   ) : null}
@@ -333,7 +336,10 @@ export const TaskCards = ({
                       {task.maxParticipants !== null
                         ? ` von ${task.maxParticipants}`
                         : ""}{" "}
-                      Anmeldung{task.maxParticipants === 1 ? "" : "en"}
+                      Anmeldung
+                      {task.maxParticipants === 1 || task.participantCount === 1
+                        ? ""
+                        : "en"}
                     </p>
                   </div>
 
