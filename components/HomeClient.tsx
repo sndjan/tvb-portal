@@ -82,6 +82,34 @@ export function HomeClient() {
     onCancelEdit,
   } = useHomeClient();
 
+  const renderTaskList = (tasks: typeof openTasks) =>
+    isLoadingTasks ? (
+      <LoadingState />
+    ) : tasks.length === 0 ? (
+      <EmptyState />
+    ) : (
+      <TaskCards
+        tasks={tasks}
+        isAdmin={isAdmin}
+        editingTaskId={editingTaskId}
+        editForm={editForm}
+        busyTaskIds={busyTaskIds}
+        pendingUploads={pendingUploads}
+        onParticipantsChanged={() => refreshTasks({ keepLoadingState: true })}
+        onStartEdit={startEditTask}
+        onCancelEdit={onCancelEdit}
+        onChangeEditForm={(v) => setEditForm(v)}
+        onSaveEdit={handleSaveEdit}
+        onDeleteTask={handleDeleteTask}
+        onToggleStatus={toggleTaskStatus}
+        onToggleVisibility={toggleTaskVisibility}
+        onSelectUpload={updateUploadSelection}
+        onUploadImages={handleUploadImages}
+        onDeleteImage={handleDeleteImage}
+        onSendEmail={handleSendTaskEmail}
+      />
+    );
+
   return (
     <main className="min-h-screen bg-linear-to-b from-background via-background to-muted/40 flex flex-col">
       <section className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 pt-4 pb-14 sm:px-6 lg:px-8 flex-1">
@@ -152,80 +180,30 @@ export function HomeClient() {
           />
         ) : null} */}
 
-        <Tabs
-          value={activeTab}
-          onValueChange={(value) => setActiveTab(value as TaskStatus)}
-          className="w-full gap-4"
-        >
-          <TabsList>
-            <TabsTrigger value="open">Offen ({openTasks.length})</TabsTrigger>
-            <TabsTrigger value="done">
-              Erledigt ({doneTasks.length})
-            </TabsTrigger>
-          </TabsList>
+        {isAdmin ? (
+          <Tabs
+            value={activeTab}
+            onValueChange={(value) => setActiveTab(value as TaskStatus)}
+            className="w-full gap-4"
+          >
+            <TabsList>
+              <TabsTrigger value="open">Offen ({openTasks.length})</TabsTrigger>
+              <TabsTrigger value="done">
+                Erledigt ({doneTasks.length})
+              </TabsTrigger>
+            </TabsList>
 
-          <TabsContent value="open" className="mt-0">
-            {isLoadingTasks ? (
-              <LoadingState />
-            ) : listedTasks.length === 0 ? (
-              <EmptyState />
-            ) : (
-              <TaskCards
-                tasks={listedTasks}
-                isAdmin={isAdmin}
-                editingTaskId={editingTaskId}
-                editForm={editForm}
-                busyTaskIds={busyTaskIds}
-                pendingUploads={pendingUploads}
-                onParticipantsChanged={() =>
-                  refreshTasks({ keepLoadingState: true })
-                }
-                onStartEdit={startEditTask}
-                onCancelEdit={onCancelEdit}
-                onChangeEditForm={(v) => setEditForm(v)}
-                onSaveEdit={handleSaveEdit}
-                onDeleteTask={handleDeleteTask}
-                onToggleStatus={toggleTaskStatus}
-                onToggleVisibility={toggleTaskVisibility}
-                onSelectUpload={updateUploadSelection}
-                onUploadImages={handleUploadImages}
-                onDeleteImage={handleDeleteImage}
-                onSendEmail={handleSendTaskEmail}
-              />
-            )}
-          </TabsContent>
+            <TabsContent value="open" className="mt-0">
+              {renderTaskList(listedTasks)}
+            </TabsContent>
 
-          <TabsContent value="done" className="mt-0">
-            {isLoadingTasks ? (
-              <LoadingState />
-            ) : listedTasks.length === 0 ? (
-              <EmptyState />
-            ) : (
-              <TaskCards
-                tasks={listedTasks}
-                isAdmin={isAdmin}
-                editingTaskId={editingTaskId}
-                editForm={editForm}
-                busyTaskIds={busyTaskIds}
-                pendingUploads={pendingUploads}
-                onParticipantsChanged={() =>
-                  refreshTasks({ keepLoadingState: true })
-                }
-                onStartEdit={startEditTask}
-                onCancelEdit={onCancelEdit}
-                onChangeEditForm={(v) => setEditForm(v)}
-                onSaveEdit={handleSaveEdit}
-                onDeleteTask={handleDeleteTask}
-                onToggleStatus={toggleTaskStatus}
-                onToggleVisibility={toggleTaskVisibility}
-                onSelectUpload={updateUploadSelection}
-                onUploadImages={handleUploadImages}
-                onDeleteImage={handleDeleteImage}
-                onSendEmail={handleSendTaskEmail}
-              />
-            )}
-          </TabsContent>
-        </Tabs>
+            <TabsContent value="done" className="mt-0">
+              {renderTaskList(listedTasks)}
+            </TabsContent>
+          </Tabs>
+        ) : (
+          <div className="w-full">{renderTaskList(openTasks)}</div>
+        )}
       </section>
       <Footer />
     </main>
