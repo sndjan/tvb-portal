@@ -306,10 +306,6 @@ export function useHomeClient() {
   }
 
   async function handleDeleteTask(taskId: string) {
-    if (!window.confirm("Diesen Arbeitseinsatz wirklich löschen?")) {
-      return;
-    }
-
     setTaskBusy(taskId, true, Action.DeleteTask);
 
     try {

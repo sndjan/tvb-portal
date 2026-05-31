@@ -28,8 +28,19 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { TaskForm } from "./NewEntryForm";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "./ui/alert-dialog";
 import { Badge } from "./ui/badge";
-import { Button } from "./ui/button";
+import { Button, buttonVariants } from "./ui/button";
 import {
   Card,
   CardContent,
@@ -99,6 +110,9 @@ export const TaskCards = ({
   );
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+  const [removingParticipantId, setRemovingParticipantId] = useState<
+    string | null
+  >(null);
   const [isCheckingRegistration, setIsCheckingRegistration] = useState(false);
   const [isRegistrationSubmitting, setIsRegistrationSubmitting] =
     useState(false);
@@ -200,6 +214,30 @@ export const TaskCards = ({
       toast.error(toMessage(error));
     } finally {
       setIsRegistrationSubmitting(false);
+    }
+  }
+
+  async function handleAdminRemoveParticipant(
+    taskId: string,
+    participant: { id: string; firstName: string; lastName: string },
+  ) {
+    setRemovingParticipantId(participant.id);
+
+    try {
+      await requestJson<{ ok: true }>(`/api/tasks/${taskId}/participants`, {
+        method: "DELETE",
+        body: JSON.stringify({
+          firstName: participant.firstName,
+          lastName: participant.lastName,
+        }),
+      });
+
+      toast.success("Teilnehmer abgemeldet.");
+      await onParticipantsChanged?.();
+    } catch (error) {
+      toast.error(toMessage(error));
+    } finally {
+      setRemovingParticipantId(null);
     }
   }
 
@@ -353,7 +391,69 @@ export const TaskCards = ({
                           <ol className="grid list-decimal gap-1 pl-6 text-sm">
                             {task.participants.map((participant) => (
                               <li key={participant.id} className="px-2 py-1">
-                                {participant.firstName} {participant.lastName}
+                                <div className="flex items-center justify-between gap-2">
+                                  <span>
+                                    {participant.firstName}{" "}
+                                    {participant.lastName}
+                                  </span>
+                                  <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                      <Button
+                                        type="button"
+                                        size="icon-xs"
+                                        variant="ghost"
+                                        className="text-destructive hover:text-destructive"
+                                        disabled={
+                                          removingParticipantId ===
+                                          participant.id
+                                        }
+                                        aria-label={`${participant.firstName} ${participant.lastName} abmelden`}
+                                      >
+                                        {removingParticipantId ===
+                                        participant.id ? (
+                                          <Spinner />
+                                        ) : (
+                                          <Trash2
+                                            className="size-3"
+                                            aria-hidden="true"
+                                          />
+                                        )}
+                                      </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                      <AlertDialogHeader>
+                                        <AlertDialogTitle>
+                                          Teilnehmer abmelden?
+                                        </AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                          {participant.firstName}{" "}
+                                          {participant.lastName} wird von &quot;
+                                          {task.title}&quot; abgemeldet. Diese
+                                          Aktion kann nicht rückgängig gemacht
+                                          werden.
+                                        </AlertDialogDescription>
+                                      </AlertDialogHeader>
+                                      <AlertDialogFooter>
+                                        <AlertDialogCancel>
+                                          Abbrechen
+                                        </AlertDialogCancel>
+                                        <AlertDialogAction
+                                          className={buttonVariants({
+                                            variant: "destructive",
+                                          })}
+                                          onClick={() =>
+                                            void handleAdminRemoveParticipant(
+                                              task.id,
+                                              participant,
+                                            )
+                                          }
+                                        >
+                                          Abmelden
+                                        </AlertDialogAction>
+                                      </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                  </AlertDialog>
+                                </div>
                               </li>
                             ))}
                           </ol>
@@ -554,20 +654,45 @@ export const TaskCards = ({
                       )}
                       Mail senden
                     </Button>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="destructive"
-                      onClick={() => onDeleteTask(task.id)}
-                      disabled={isBusy}
-                    >
-                      {isDeleting ? (
-                        <Spinner />
-                      ) : (
-                        <Trash2 className="size-4" aria-hidden="true" />
-                      )}
-                      Löschen
-                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="destructive"
+                          disabled={isBusy}
+                        >
+                          {isDeleting ? (
+                            <Spinner />
+                          ) : (
+                            <Trash2 className="size-4" aria-hidden="true" />
+                          )}
+                          Löschen
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>
+                            Arbeitseinsatz löschen?
+                          </AlertDialogTitle>
+                          <AlertDialogDescription>
+                            &quot;{task.title}&quot; wird dauerhaft gelöscht.
+                            Diese Aktion kann nicht rückgängig gemacht werden.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+                          <AlertDialogAction
+                            className={buttonVariants({
+                              variant: "destructive",
+                            })}
+                            onClick={() => onDeleteTask(task.id)}
+                          >
+                            Löschen
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </CardFooter>
                 ) : null}
               </Card>

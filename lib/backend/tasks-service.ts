@@ -174,12 +174,17 @@ function resolveBrevoListId(variant: MailListVariant): {
   listId: number;
   envName: string;
 } {
-  const envName = variant === "testing" ? "BREVO_LIST_ID_TESTING" : "BREVO_LIST_ID";
+  const envName =
+    variant === "testing" ? "BREVO_LIST_ID_TESTING" : "BREVO_LIST_ID";
   const raw = process.env[envName]?.trim();
   const listId = Number(raw);
 
   if (!raw || !Number.isInteger(listId) || listId <= 0) {
-    throw new HttpError(500, `${envName} ist nicht konfiguriert`, "config_missing");
+    throw new HttpError(
+      500,
+      `${envName} ist nicht konfiguriert`,
+      "config_missing",
+    );
   }
 
   return { listId, envName };
@@ -1793,8 +1798,14 @@ export async function notifyTaskCreated(
   const textLines = [
     "Neuer Arbeitseinsatz",
     "",
+    "Liebe Mitglieder, ein neuer Arbeitseinsatz ist Online. Details dazu über den folgenden Link oder über unsere Homepage. Bitte prüft ob ihr teilnehmen / die entsprechende Aufgabe übernehmen könnt. Jede helfende Hand für unseren Verein ist herzlich willkommen. Geleistete Arbeitsstunden werden wie üblich verrechnet.",
+    "",
     ...taskDetails.map(([label, value]) => `${label}: ${value}`),
     ...(taskUrl ? ["", `Zur Seite: ${taskUrl}`] : []),
+    "",
+    "Viele Grüße",
+    "Andreas Gutbrod",
+    "Technischer Leiter",
   ];
 
   const dateDisplay = isTimeframe ? `${startDate} bis ${endDate}` : startDate;
@@ -1829,8 +1840,10 @@ export async function notifyTaskCreated(
 
         const html = `<div style="font-family:Arial,sans-serif;margin:0;padding:0;">
   <div style="padding:32px 24px;max-width:560px;">
-    <h1 style="font-size:24px;font-weight:700;margin:0 0 8px;color:#111827;">Neuer Arbeitseinsatz</h1>
-    <p style="color:#6b7280;margin:0 0 24px;font-size:15px;">Hallo, es wurde ein neuer Arbeitseinsatz eingetragen. Hier sind die Details:</p>
+    <p style="color:#111827;margin:0 0 16px;font-size:15px;font-weight:600;">Liebe Mitglieder,</p>
+    <p style="color:#374151;margin:0 0 16px;font-size:15px;line-height:1.6;">ein neuer Arbeitseinsatz ist online. Details dazu findet ihr &uuml;ber den untenstehenden Link oder &uuml;ber unsere <a href="https://tv-bellenberg.de/" style="color:#1a4d2e;text-decoration:underline;">Homepage</a>.</p>
+    <p style="color:#374151;margin:0 0 16px;font-size:15px;line-height:1.6;">Bitte pr&uuml;ft, ob ihr teilnehmen bzw. die entsprechende Aufgabe &uuml;bernehmen k&ouml;nnt. Jede helfende Hand f&uuml;r unseren Verein ist herzlich willkommen.</p>
+    <p style="color:#374151;margin:0 0 24px;font-size:15px;line-height:1.6;">Geleistete Arbeitsstunden werden wie &uuml;blich verrechnet.</p>
     <div style="background:white;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin:0 0 24px;">
       <table style="border-collapse:collapse;width:100%;"><tr>
         <td style="padding:0;vertical-align:top;">
@@ -1842,10 +1855,10 @@ export async function notifyTaskCreated(
     </div>
     ${
       taskUrl
-        ? `<div style="margin:0 0 12px;"><a href="${escapeHtml(taskUrl)}" style="display:inline-block;background:#1a4d2e;color:white;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:600;font-size:16px;">Jetzt eintragen &#8594;</a></div>
-    <p style="margin:0 0 12px;font-size:12px;color:#6b7280;">Die Seite kann auch &uuml;ber die tv-bellenberg.de Homepage erreicht werden.</p>`
+        ? `<div style="margin:0 0 12px;"><a href="${escapeHtml(taskUrl)}" style="display:inline-block;background:#1a4d2e;color:white;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:600;font-size:16px;">Jetzt eintragen &#8594;</a></div>`
         : ""
     }
+    <p style="color:#374151;margin:24px 0 0;font-size:14px;">Viele Gr&uuml;&szlig;e<br />Andreas Gutbrod<br />Technischer Leiter</p>
   </div>
 </div>`;
 
