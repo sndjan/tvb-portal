@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { requestJson } from "@/lib/api";
+import { MailListVariant } from "@/lib/types";
 import { toMessage } from "@/lib/utils";
 import {
   Card,
@@ -13,6 +14,13 @@ import {
   CardHeader,
   CardTitle,
 } from "./ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select";
 import { Spinner } from "./ui/spinner";
 
 type ExternalMailContact = {
@@ -22,6 +30,11 @@ type ExternalMailContact = {
   nachname: string | null;
 };
 
+type ExternalMailListProps = {
+  variant: MailListVariant;
+  onVariantChange: (variant: MailListVariant) => void;
+};
+
 function getDisplayName(contact: ExternalMailContact): string | null {
   const parts = [contact.nachname, contact.vorname].filter(
     (part): part is string => Boolean(part && part.trim()),
@@ -29,7 +42,10 @@ function getDisplayName(contact: ExternalMailContact): string | null {
   return parts.length === 0 ? null : parts.join(" ");
 }
 
-export const ExternalMailList = () => {
+export const ExternalMailList = ({
+  variant,
+  onVariantChange,
+}: ExternalMailListProps) => {
   const [contacts, setContacts] = useState<ExternalMailContact[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -37,9 +53,12 @@ export const ExternalMailList = () => {
     let cancelled = false;
 
     async function load() {
+      if (!cancelled) {
+        setIsLoading(true);
+      }
       try {
         const data = await requestJson<{ contacts: ExternalMailContact[] }>(
-          "/api/admin/external-mail-list",
+          `/api/admin/external-mail-list?list=${variant}`,
           { method: "GET" },
         );
         if (!cancelled) {
@@ -61,7 +80,7 @@ export const ExternalMailList = () => {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [variant]);
 
   return (
     <Card>
@@ -72,7 +91,20 @@ export const ExternalMailList = () => {
         </CardTitle>
         <CardDescription>Kontakte aus der Brevo-Liste.</CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="grid gap-3">
+        <Select
+          value={variant}
+          onValueChange={(value) => onVariantChange(value as MailListVariant)}
+        >
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="default">TVB-Arbeit</SelectItem>
+            <SelectItem value="testing">TVB-Arbeit TEST</SelectItem>
+          </SelectContent>
+        </Select>
+
         <div className="max-h-140 space-y-2 overflow-auto pr-1">
           {isLoading ? (
             <div className="flex items-center justify-center py-6">

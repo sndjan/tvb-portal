@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
     let notification = null;
 
     if (input.sendEmail) {
-      notification = await notifyTaskCreated(task);
+      notification = await notifyTaskCreated(task, input.mailListVariant);
     }
 
     return Response.json(

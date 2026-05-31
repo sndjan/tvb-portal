@@ -77,6 +77,8 @@ export function HomeClient() {
     // UNUSED: handleAddEmailRecipient / handleRemoveEmailRecipient still exist
     // in useHomeClient but are no longer wired up since ExternalMailList is
     // read-only.
+    mailListVariant,
+    setMailListVariant,
     onCancelEdit,
   } = useHomeClient();
 
@@ -134,7 +136,10 @@ export function HomeClient() {
 
             {/* UNUSED: <MailingList ... /> was previously rendered here.
                 Replaced by <ExternalMailList /> backed by Brevo list 11. */}
-            <ExternalMailList />
+            <ExternalMailList
+              variant={mailListVariant}
+              onVariantChange={setMailListVariant}
+            />
           </div>
         ) : null}
 

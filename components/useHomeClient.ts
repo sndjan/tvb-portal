@@ -9,6 +9,7 @@ import {
   BusyTask,
   EmailRecipient,
   ImageRecord,
+  MailListVariant,
   PendingUpload,
   TaskFormState,
   TasksResponse,
@@ -49,6 +50,9 @@ export function useHomeClient() {
 
   const [optInEmail, setOptInEmail] = useState("");
   const [isTogglingOptIn, setIsTogglingOptIn] = useState(false);
+
+  const [mailListVariant, setMailListVariant] =
+    useState<MailListVariant>("default");
 
   const [pendingUploads, setPendingUploads] = useState<
     Record<string, PendingUpload>
@@ -200,6 +204,7 @@ export function useHomeClient() {
         status: createForm.status,
         isHidden: createForm.isHidden,
         sendEmail: createForm.sendEmail,
+        mailListVariant,
       };
 
       const response = await requestJson<{
@@ -439,7 +444,10 @@ export function useHomeClient() {
     try {
       const result = await requestJson<{
         notification: { sent: boolean; message: string };
-      }>(`/api/tasks/${taskId}/notify`, { method: "POST" });
+      }>(`/api/tasks/${taskId}/notify`, {
+        method: "POST",
+        body: JSON.stringify({ mailListVariant }),
+      });
 
       if (result.notification.sent) {
         toast.success(result.notification.message || "E-Mail erfolgreich gesendet.");
@@ -620,6 +628,8 @@ export function useHomeClient() {
     setOptInEmail,
     isTogglingOptIn,
     handleToggleOptIn,
+    mailListVariant,
+    setMailListVariant,
     onCancelEdit: () => {
       setEditingTaskId(null);
       setEditForm(null);

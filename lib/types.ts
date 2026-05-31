@@ -1,5 +1,7 @@
 export type TaskStatus = "open" | "done";
 
+export type MailListVariant = "default" | "testing";
+
 export type ParticipantRecord = {
   id: string;
   taskId: string;

@@ -2,10 +2,15 @@ import type { NextRequest } from "next/server";
 
 import { HttpError, toRouteErrorResponse } from "@/lib/backend/errors";
 import {
+  readJsonBody,
   requireAdminRequest,
   requireNonEmptyTaskId,
 } from "@/lib/backend/route-helpers";
-import { getTaskById, notifyTaskCreated } from "@/lib/backend/tasks-service";
+import {
+  getTaskById,
+  notifyTaskCreated,
+  parseNotifyTaskInput,
+} from "@/lib/backend/tasks-service";
 
 export const runtime = "nodejs";
 
@@ -27,7 +32,15 @@ export async function POST(request: NextRequest, context: NotifyRouteContext) {
       throw new HttpError(404, "Task nicht gefunden", "task_not_found");
     }
 
-    const notification = await notifyTaskCreated(task);
+    let body: unknown = {};
+    try {
+      body = await readJsonBody(request);
+    } catch {
+      body = {};
+    }
+    const { mailListVariant } = parseNotifyTaskInput(body);
+
+    const notification = await notifyTaskCreated(task, mailListVariant);
 
     return Response.json({ notification });
   } catch (error) {

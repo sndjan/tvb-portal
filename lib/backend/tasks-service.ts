@@ -129,6 +129,8 @@ const optionalBooleanSchema = z.preprocess((value) => {
   return value;
 }, z.boolean());
 
+const mailListVariantSchema = z.enum(["default", "testing"]);
+
 const createTaskBodySchema = z.object({
   title: z.string().trim().min(1).max(160),
   description: z.string().trim().min(1).max(4000),
@@ -140,7 +142,52 @@ const createTaskBodySchema = z.object({
   status: z.enum(["open", "done"]).optional(),
   isHidden: optionalBooleanSchema.optional(),
   sendEmail: optionalBooleanSchema.optional(),
+  mailListVariant: mailListVariantSchema.optional(),
 });
+
+const notifyTaskBodySchema = z.object({
+  mailListVariant: mailListVariantSchema.optional(),
+});
+
+export type MailListVariant = z.infer<typeof mailListVariantSchema>;
+
+export function parseMailListVariant(value: unknown): MailListVariant {
+  const parsed = mailListVariantSchema.safeParse(value);
+  return parsed.success ? parsed.data : "default";
+}
+
+export function parseNotifyTaskInput(input: unknown): {
+  mailListVariant: MailListVariant;
+} {
+  const parsed = notifyTaskBodySchema.safeParse(input ?? {});
+
+  if (!parsed.success) {
+    throw toValidationError(parsed.error);
+  }
+
+  return {
+    mailListVariant: parsed.data.mailListVariant ?? "default",
+  };
+}
+
+function resolveBrevoListId(variant: MailListVariant): {
+  listId: number;
+  envName: string;
+} {
+  const envName = variant === "testing" ? "BREVO_LIST_ID_TESTING" : "BREVO_LIST_ID";
+  const raw = process.env[envName]?.trim();
+  const listId = Number(raw);
+
+  if (!raw || !Number.isInteger(listId) || listId <= 0) {
+    throw new HttpError(500, `${envName} ist nicht konfiguriert`, "config_missing");
+  }
+
+  return { listId, envName };
+}
+
+export function getBrevoListId(variant: MailListVariant): number {
+  return resolveBrevoListId(variant).listId;
+}
 
 const updateTaskBodySchema = createTaskBodySchema
   .omit({ sendEmail: true })
@@ -183,6 +230,7 @@ export type CreateTaskInput = {
   status: TaskStatus;
   isHidden: boolean;
   sendEmail: boolean;
+  mailListVariant: MailListVariant;
 };
 
 export type UpdateTaskInput = Partial<
@@ -313,6 +361,7 @@ export function parseCreateTaskInput(input: unknown): CreateTaskInput {
     status: payload.status ?? "open",
     isHidden: payload.isHidden ?? false,
     sendEmail: payload.sendEmail ?? false,
+    mailListVariant: payload.mailListVariant ?? "default",
   };
 }
 
@@ -1290,10 +1339,10 @@ export async function deleteTaskImage(
 
 const BREVO_CONTACTS_URL_BASE = "https://api.brevo.com/v3/contacts/lists";
 
-async function listBrevoEmailRecipients(): Promise<EmailRecipientRecord[]> {
+async function listBrevoEmailRecipients(
+  variant: MailListVariant = "default",
+): Promise<EmailRecipientRecord[]> {
   const apiKey = process.env.BREVO_API_KEY?.trim();
-  const listIdRaw = process.env.BREVO_LIST_ID?.trim();
-  const listId = Number(listIdRaw);
 
   if (!apiKey) {
     throw new HttpError(
@@ -1303,13 +1352,7 @@ async function listBrevoEmailRecipients(): Promise<EmailRecipientRecord[]> {
     );
   }
 
-  if (!listIdRaw || !Number.isInteger(listId) || listId <= 0) {
-    throw new HttpError(
-      500,
-      "BREVO_LIST_ID ist nicht konfiguriert",
-      "config_missing",
-    );
-  }
+  const { listId } = resolveBrevoListId(variant);
 
   const response = await fetch(
     `${BREVO_CONTACTS_URL_BASE}/${listId}/contacts?limit=500`,
@@ -1691,8 +1734,9 @@ export async function notifyParticipantUnregistered(
 
 export async function notifyTaskCreated(
   task: TaskRecord,
+  variant: MailListVariant = "default",
 ): Promise<TaskNotificationResult> {
-  const recipients = await listBrevoEmailRecipients();
+  const recipients = await listBrevoEmailRecipients(variant);
 
   if (recipients.length === 0) {
     return {

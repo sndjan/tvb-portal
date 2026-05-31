@@ -2,6 +2,7 @@ import type { NextRequest } from "next/server";
 
 import { HttpError, toRouteErrorResponse } from "@/lib/backend/errors";
 import { requireAdminRequest } from "@/lib/backend/route-helpers";
+import { parseMailListVariant } from "@/lib/backend/tasks-service";
 
 export const runtime = "nodejs";
 
@@ -41,12 +42,17 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const listIdRaw = process.env.BREVO_LIST_ID;
+    const variant = parseMailListVariant(
+      new URL(request.url).searchParams.get("list"),
+    );
+    const envName =
+      variant === "testing" ? "BREVO_LIST_ID_TESTING" : "BREVO_LIST_ID";
+    const listIdRaw = process.env[envName];
     const listId = Number(listIdRaw);
     if (!listIdRaw || !Number.isInteger(listId) || listId <= 0) {
       throw new HttpError(
         500,
-        "BREVO_LIST_ID ist nicht konfiguriert",
+        `${envName} ist nicht konfiguriert`,
         "config_missing",
       );
     }
