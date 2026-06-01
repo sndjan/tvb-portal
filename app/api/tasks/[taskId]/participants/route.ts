@@ -8,8 +8,11 @@ import {
 } from "@/lib/backend/route-helpers";
 import {
   addTaskParticipant,
+  getTaskById,
   hasTaskParticipant,
   listTaskParticipants,
+  notifyParticipantRegistered,
+  notifyParticipantUnregistered,
   parseAddParticipantInput,
   parseRemoveParticipantInput,
   removeTaskParticipant,
@@ -75,6 +78,10 @@ export async function POST(
       bypassLimit: isAdmin,
     });
 
+    void getTaskById(id, false).then((task) => {
+      if (task) void notifyParticipantRegistered(task, participant);
+    });
+
     return Response.json({ participant }, { status: 201 });
   } catch (error) {
     return toRouteErrorResponse(error);
@@ -91,6 +98,10 @@ export async function DELETE(
     const body = await readJsonBody(request);
     const input = parseRemoveParticipantInput(body);
     await removeTaskParticipant(id, input);
+
+    void getTaskById(id, false).then((task) => {
+      if (task) void notifyParticipantUnregistered(task, input);
+    });
 
     return Response.json({ ok: true });
   } catch (error) {

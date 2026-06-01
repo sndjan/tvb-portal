@@ -501,9 +501,9 @@ export function parseAddEmailRecipientInput(
   };
 }
 
-export function parseAddManualEmailRecipientInput(
-  input: unknown,
-): { email: string } {
+export function parseAddManualEmailRecipientInput(input: unknown): {
+  email: string;
+} {
   const parsed = addManualEmailRecipientBodySchema.safeParse(input);
 
   if (!parsed.success) {
@@ -1733,19 +1733,26 @@ export async function notifyParticipantRegistered(
   }
 
   const registeredAt = formatDateTime(participant.createdAt);
+  const participantName = `${participant.firstName} ${participant.lastName}`;
   const subject = `Neue Anmeldung: ${task.title}`;
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL?.trim().replace(/\/+$/, "");
+  const taskUrl = baseUrl ? `${baseUrl}/` : null;
 
-  const html = `
-    <div style="font-family:Arial,sans-serif;line-height:1.6;color:#111827;">
-      <h1 style="font-size:20px;margin:0 0 16px;">Neue Anmeldung</h1>
-      <table style="border-collapse:collapse;margin:0 0 16px;">
-        <tr><td style="padding:4px 12px 4px 0;font-weight:600;vertical-align:top;">Einsatz</td><td style="padding:4px 0;">${escapeHtml(task.title)}</td></tr>
-        <tr><td style="padding:4px 12px 4px 0;font-weight:600;vertical-align:top;">Angemeldet am</td><td style="padding:4px 0;">${escapeHtml(registeredAt)}</td></tr>
-      </table>
+  const html = `<div style="font-family:Arial,sans-serif;margin:0;padding:0;">
+  <div style="padding: 0 24px; max-width:560px;">
+    <div style="background:white;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin:0 0 24px;">
+      <span style="font-weight:700;font-size:16px;color:#111827;">Anmeldung</span>
+      <div style="margin-top:12px;">
+        <p style="margin:0 0 4px;font-size:13px;color:#374151;">Name: ${escapeHtml(participantName)}</p>
+        <p style="margin:0 0 4px;font-size:13px;color:#374151;">Arbeitseinsatz: ${escapeHtml(task.title)}</p>
+        <p style="margin:0 0 4px;font-size:13px;color:#374151;">Angemeldet am: ${escapeHtml(registeredAt)}</p>
+      </div>
     </div>
-  `;
+    ${taskUrl ? `<div style="margin:0 0 12px;"><a href="${escapeHtml(taskUrl)}" style="display:inline-block;background:#1a4d2e;color:white;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:600;font-size:16px;">Zur Seite &#8594;</a></div>` : ""}
+  </div>
+</div>`;
 
-  const text = `Neue Anmeldung\n\nEinsatz: ${task.title}\nAngemeldet am: ${registeredAt}`;
+  const text = `Anmeldung\n\nName: ${participantName}\nArbeitseinsatz: ${task.title}\nAngemeldet am: ${registeredAt}${taskUrl ? `\n\nZur Seite: ${taskUrl}` : ""}\n\n`;
 
   try {
     await sendBrevoEmail(smtpUser, smtpPassword, {
@@ -1761,6 +1768,7 @@ export async function notifyParticipantRegistered(
 
 export async function notifyParticipantUnregistered(
   task: TaskRecord,
+  participant: { firstName: string; lastName: string },
 ): Promise<void> {
   const contactEmail = process.env.NEXT_PUBLIC_TECHNICAL_CONTACT_EMAIL?.trim();
   const smtpUser = process.env.BREVO_SMTP_USER?.trim();
@@ -1771,19 +1779,26 @@ export async function notifyParticipantUnregistered(
   }
 
   const unregisteredAt = formatDateTime(new Date().toISOString());
+  const participantName = `${participant.firstName} ${participant.lastName}`;
   const subject = `Abmeldung: ${task.title}`;
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL?.trim().replace(/\/+$/, "");
+  const taskUrl = baseUrl ? `${baseUrl}/` : null;
 
-  const html = `
-    <div style="font-family:Arial,sans-serif;line-height:1.6;color:#111827;">
-      <h1 style="font-size:20px;margin:0 0 16px;">Abmeldung</h1>
-      <table style="border-collapse:collapse;margin:0 0 16px;">
-        <tr><td style="padding:4px 12px 4px 0;font-weight:600;vertical-align:top;">Einsatz</td><td style="padding:4px 0;">${escapeHtml(task.title)}</td></tr>
-        <tr><td style="padding:4px 12px 4px 0;font-weight:600;vertical-align:top;">Abgemeldet am</td><td style="padding:4px 0;">${escapeHtml(unregisteredAt)}</td></tr>
-      </table>
+  const html = `<div style="font-family:Arial,sans-serif;margin:0;padding:0;">
+  <div style="padding: 0 24px; max-width:560px;">
+    <div style="background:white;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin:0 0 24px;">
+      <span style="font-weight:700;font-size:16px;color:#111827;">Abmeldung</span>
+      <div style="margin-top:12px;">
+        <p style="margin:0 0 4px;font-size:13px;color:#374151;">Name: ${escapeHtml(participantName)}</p>
+        <p style="margin:0 0 4px;font-size:13px;color:#374151;">Arbeitseinsatz: ${escapeHtml(task.title)}</p>
+        <p style="margin:0 0 4px;font-size:13px;color:#374151;">Abgemeldet am: ${escapeHtml(unregisteredAt)}</p>
+      </div>
     </div>
-  `;
+    ${taskUrl ? `<div style="margin:0 0 12px;"><a href="${escapeHtml(taskUrl)}" style="display:inline-block;background:#1a4d2e;color:white;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:600;font-size:16px;">Zur Seite &#8594;</a></div>` : ""}
+  </div>
+</div>`;
 
-  const text = `Abmeldung\n\nEinsatz: ${task.title}\nAbgemeldet am: ${unregisteredAt}`;
+  const text = `Abmeldung\n\nName: ${participantName}\nArbeitseinsatz: ${task.title}\nAbgemeldet am: ${unregisteredAt}${taskUrl ? `\n\nZur Seite: ${taskUrl}` : ""}\n\n`;
 
   try {
     await sendBrevoEmail(smtpUser, smtpPassword, {
