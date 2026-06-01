@@ -2009,9 +2009,15 @@ export function buildTaskIcs(task: TaskRecord): string {
   const dtStart = toIcsTimestamp(task.startDate);
   const dtEnd = task.endDate
     ? toIcsTimestamp(task.endDate)
-    : toIcsTimestamp(
-        new Date(new Date(task.startDate).getTime() + 60 * 60 * 1000).toISOString(),
-      );
+    : (() => {
+        const hours = task.durationEstimate
+          ? parseFloat(task.durationEstimate)
+          : NaN;
+        const durationMs = isFinite(hours) && hours > 0 ? hours * 3600000 : 3600000;
+        return toIcsTimestamp(
+          new Date(new Date(task.startDate).getTime() + durationMs).toISOString(),
+        );
+      })();
   const summary = escapeIcsText(task.title);
   const description = escapeIcsText(task.description);
 
