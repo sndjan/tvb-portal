@@ -1997,17 +1997,21 @@ function toIcsTimestamp(isoDate: string): string {
 }
 
 export function buildTaskIcs(task: TaskRecord): string {
-  if (!task.startDate || !task.endDate) {
+  if (!task.startDate) {
     throw new HttpError(
       400,
-      "Kalenderexport benoetigt Startdatum und Enddatum",
+      "Kalenderexport benoetigt ein Startdatum",
       "calendar_date_missing",
     );
   }
 
   const dtStamp = toIcsTimestamp(new Date().toISOString());
   const dtStart = toIcsTimestamp(task.startDate);
-  const dtEnd = toIcsTimestamp(task.endDate);
+  const dtEnd = task.endDate
+    ? toIcsTimestamp(task.endDate)
+    : toIcsTimestamp(
+        new Date(new Date(task.startDate).getTime() + 60 * 60 * 1000).toISOString(),
+      );
   const summary = escapeIcsText(task.title);
   const description = escapeIcsText(task.description);
 

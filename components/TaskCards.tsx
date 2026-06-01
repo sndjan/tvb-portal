@@ -10,9 +10,10 @@ import {
   TaskFormState,
   TaskWithDetails,
 } from "@/lib/types";
-import { baseFieldClass, formatDateRange, toMessage } from "@/lib/utils";
+import { baseFieldClass, cn, formatDateRange, toMessage } from "@/lib/utils";
 import {
   CalendarDays,
+  CalendarPlus,
   Check,
   Clock3,
   Eye,
@@ -642,6 +643,22 @@ export const TaskCards = ({
                     </Button>
                   ) : null}
 
+                  {!isAdmin && task.startDate ? (
+                    <a
+                      href={`/api/tasks/${task.id}/ics`}
+                      download
+                      className={cn(
+                        buttonVariants({
+                          variant: "outline",
+                          size: "sm",
+                        }),
+                      )}
+                    >
+                      <CalendarPlus className="size-4" aria-hidden="true" />
+                      Zum Kalender hinzufügen
+                    </a>
+                  ) : null}
+
                   {isAdmin && isEditing && editForm ? (
                     <div className="grid gap-3 rounded-lg border bg-muted/20 p-3">
                       <h3 className="text-sm font-medium">
@@ -664,6 +681,22 @@ export const TaskCards = ({
 
                 {isAdmin ? (
                   <CardFooter className="flex flex-wrap gap-2 border-t">
+                    {task.startDate ? (
+                      <a
+                        href={`/api/tasks/${task.id}/ics`}
+                        download
+                        className={cn(
+                          buttonVariants({
+                            variant: "outline",
+                            size: "sm",
+                            className: "border",
+                          }),
+                        )}
+                      >
+                        <CalendarPlus className="size-4" aria-hidden="true" />
+                        Zum Kalender hinzufügen
+                      </a>
+                    ) : null}
                     <Button
                       type="button"
                       size="sm"
