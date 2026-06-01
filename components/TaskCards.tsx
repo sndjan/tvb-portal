@@ -63,6 +63,78 @@ import { Spinner } from "./ui/spinner";
 const TECHNICAL_CONTACT_NAME = process.env.NEXT_PUBLIC_TECHNICAL_CONTACT_NAME;
 const TECHNICAL_CONTACT_EMAIL = process.env.NEXT_PUBLIC_TECHNICAL_CONTACT_EMAIL;
 
+function AdminAddParticipantForm({
+  taskId,
+  onAdded,
+}: {
+  taskId: string;
+  onAdded: () => void | Promise<void>;
+}) {
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  async function handleAdd() {
+    const fn = firstName.trim();
+    const ln = lastName.trim();
+
+    if (!fn || !ln) {
+      toast.error("Bitte Vor- und Nachname eingeben.");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      await requestJson(`/api/tasks/${taskId}/participants`, {
+        method: "POST",
+        body: JSON.stringify({ firstName: fn, lastName: ln }),
+      });
+      setFirstName("");
+      setLastName("");
+      toast.success("Teilnehmer hinzugefügt.");
+      await onAdded();
+    } catch (error) {
+      toast.error(toMessage(error));
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  return (
+    <div className="mt-3 flex gap-2">
+      <Input
+        className={baseFieldClass}
+        placeholder="Vorname"
+        value={firstName}
+        onChange={(e) => setFirstName(e.target.value)}
+        disabled={isSubmitting}
+      />
+      <Input
+        className={baseFieldClass}
+        placeholder="Nachname"
+        value={lastName}
+        onChange={(e) => setLastName(e.target.value)}
+        disabled={isSubmitting}
+      />
+      <Button
+        type="button"
+        size="sm"
+        variant="outline"
+        onClick={() => void handleAdd()}
+        disabled={isSubmitting}
+      >
+        {isSubmitting ? (
+          <Spinner />
+        ) : (
+          <UserPlus className="size-4" aria-hidden="true" />
+        )}
+        Hinzufügen
+      </Button>
+    </div>
+  );
+}
+
 type TaskCardsProps = {
   tasks: TaskWithDetails[];
   isAdmin: boolean;
@@ -464,6 +536,13 @@ export const TaskCards = ({
                           </p>
                         )}
                       </div>
+
+                      <AdminAddParticipantForm
+                        taskId={task.id}
+                        onAdded={async () => {
+                          await onParticipantsChanged?.();
+                        }}
+                      />
 
                       {/* <div>
                       <h3 className="mb-2 text-sm font-medium">Bilder</h3>

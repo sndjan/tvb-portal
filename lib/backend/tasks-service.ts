@@ -129,7 +129,7 @@ const optionalBooleanSchema = z.preprocess((value) => {
   return value;
 }, z.boolean());
 
-const mailListVariantSchema = z.enum(["default", "testing"]);
+const mailListVariantSchema = z.enum(["default", "testing", "manual"]);
 
 const createTaskBodySchema = z.object({
   title: z.string().trim().min(1).max(160),
@@ -214,6 +214,10 @@ const removeParticipantBodySchema = z.object({
 const addEmailRecipientBodySchema = z.object({
   email: z.string().trim().email().max(320),
   name: z.string().trim().min(1).max(160),
+});
+
+const addManualEmailRecipientBodySchema = z.object({
+  email: z.string().trim().email().max(320),
 });
 
 const removeEmailRecipientBodySchema = z.object({
@@ -495,6 +499,18 @@ export function parseAddEmailRecipientInput(
     email: parsed.data.email.toLowerCase(),
     name: normalizeWhitespace(parsed.data.name),
   };
+}
+
+export function parseAddManualEmailRecipientInput(
+  input: unknown,
+): { email: string } {
+  const parsed = addManualEmailRecipientBodySchema.safeParse(input);
+
+  if (!parsed.success) {
+    throw toValidationError(parsed.error);
+  }
+
+  return { email: parsed.data.email.toLowerCase() };
 }
 
 export function parseRemoveEmailRecipientInput(
@@ -1041,6 +1057,7 @@ export async function listTaskParticipants(
 export async function addTaskParticipant(
   taskId: string,
   input: AddParticipantInput,
+  options?: { bypassLimit?: boolean },
 ): Promise<ParticipantRecord> {
   const task = await getTaskById(taskId, false);
 
@@ -1049,6 +1066,7 @@ export async function addTaskParticipant(
   }
 
   if (
+    !options?.bypassLimit &&
     task.maxParticipants !== null &&
     task.participantCount >= task.maxParticipants
   ) {
@@ -1491,6 +1509,48 @@ export async function addEmailRecipient(
   };
 }
 
+export async function addManualEmailRecipient(input: {
+  email: string;
+}): Promise<EmailRecipientRecord> {
+  const supabase = getSupabaseServiceClientOrThrow();
+
+  const { data, error } = await supabase
+    .from("email_list")
+    .insert({ email: input.email, name: null })
+    .select("id, email, name")
+    .single();
+
+  if (error) {
+    if (error.code === "23505") {
+      throw new HttpError(
+        409,
+        "E-Mail existiert bereits",
+        "email_already_exists",
+      );
+    }
+
+    throw new HttpError(
+      500,
+      "E-Mail konnte nicht hinzugefuegt werden",
+      "email_insert_failed",
+    );
+  }
+
+  const row = data as {
+    id: string | number;
+    email: string;
+    name: string | null;
+  };
+
+  return {
+    id: String(row.id),
+    email: String(row.email || "")
+      .trim()
+      .toLowerCase(),
+    name: null,
+  };
+}
+
 export async function removeEmailRecipient(
   input: RemoveEmailRecipientInput,
 ): Promise<void> {
@@ -1741,7 +1801,10 @@ export async function notifyTaskCreated(
   task: TaskRecord,
   variant: MailListVariant = "default",
 ): Promise<TaskNotificationResult> {
-  const recipients = await listBrevoEmailRecipients(variant);
+  const recipients =
+    variant === "manual"
+      ? await listEmailRecipients()
+      : await listBrevoEmailRecipients(variant);
 
   if (recipients.length === 0) {
     return {

@@ -1,6 +1,6 @@
 export type TaskStatus = "open" | "done";
 
-export type MailListVariant = "default" | "testing";
+export type MailListVariant = "default" | "testing" | "manual";
 
 export type ParticipantRecord = {
   id: string;

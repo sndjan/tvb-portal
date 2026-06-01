@@ -68,9 +68,12 @@ export async function POST(
   try {
     const { taskId } = await context.params;
     const id = requireNonEmptyTaskId(taskId);
+    const isAdmin = isAdminRequest(request);
     const body = await readJsonBody(request);
     const input = parseAddParticipantInput(body);
-    const participant = await addTaskParticipant(id, input);
+    const participant = await addTaskParticipant(id, input, {
+      bypassLimit: isAdmin,
+    });
 
     return Response.json({ participant }, { status: 201 });
   } catch (error) {
