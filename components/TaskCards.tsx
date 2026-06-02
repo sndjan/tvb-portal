@@ -21,11 +21,11 @@ import {
 import {
   CalendarDays,
   CalendarPlus,
-  Check,
   Clock3,
   Eye,
   EyeOff,
   History,
+  ImagePlus,
   Info,
   ListChecks,
   Mail,
@@ -36,6 +36,7 @@ import {
   Wrench,
 } from "lucide-react";
 import { toast } from "sonner";
+import Image from "next/image";
 import { TaskForm } from "./NewEntryForm";
 import {
   AlertDialog,
@@ -48,7 +49,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "./ui/alert-dialog";
-import { Badge } from "./ui/badge";
 import { Button, buttonVariants } from "./ui/button";
 import {
   Card,
@@ -171,7 +171,7 @@ export const TaskCards = ({
   editingTaskId,
   editForm,
   busyTaskIds,
-  // pendingUploads,
+  pendingUploads,
   onStartEdit,
   onCancelEdit,
   onChangeEditForm,
@@ -179,9 +179,9 @@ export const TaskCards = ({
   onDeleteTask,
   onToggleStatus,
   onToggleVisibility,
-  // onSelectUpload,
-  // onUploadImages,
-  // onDeleteImage,
+  onSelectUpload,
+  onUploadImages,
+  onDeleteImage,
   onSendEmail,
   onParticipantsChanged,
 }: TaskCardsProps) => {
@@ -202,9 +202,9 @@ export const TaskCards = ({
   const [historyByTaskId, setHistoryByTaskId] = useState<
     Record<string, ParticipantHistoryRecord[]>
   >({});
-  const [showHistoryForTaskId, setShowHistoryForTaskId] = useState<
-    string | null
-  >(null);
+  const [historyDialogTaskId, setHistoryDialogTaskId] = useState<string | null>(
+    null,
+  );
 
   async function fetchHistory(taskId: string) {
     try {
@@ -218,13 +218,9 @@ export const TaskCards = ({
     }
   }
 
-  function toggleHistory(taskId: string) {
-    if (showHistoryForTaskId === taskId) {
-      setShowHistoryForTaskId(null);
-    } else {
-      setShowHistoryForTaskId(taskId);
-      void fetchHistory(taskId);
-    }
+  function openHistoryDialog(taskId: string) {
+    setHistoryDialogTaskId(taskId);
+    void fetchHistory(taskId);
   }
 
   const dialogTask = useMemo(
@@ -384,14 +380,16 @@ export const TaskCards = ({
             const taskBusy = busyTaskIds.find((busy) => busy.id === task.id);
             const isBusy = Boolean(taskBusy?.busy);
             const isOpen = task.status === "open";
-            // const firstImage = task.images[0];
+            const firstImage = task.images[0];
 
             const isSendingEmail =
               isBusy && taskBusy?.busyAction === Action.SendEmail;
             const isDeleting =
               isBusy && taskBusy?.busyAction === Action.DeleteTask;
-            // const isUploading =
-            //   isBusy && taskBusy?.busyAction === Action.UploadImages;
+            const isUploading =
+              isBusy && taskBusy?.busyAction === Action.UploadImages;
+            const isDeletingImage =
+              isBusy && taskBusy?.busyAction === Action.DeleteImage;
             const isTogglingStatus =
               isBusy && taskBusy?.busyAction === Action.ToggleStatus;
             const isTogglingVisibility =
@@ -400,22 +398,36 @@ export const TaskCards = ({
               isBusy && taskBusy?.busyAction === Action.SaveEdit;
 
             const isEditing = editingTaskId === task.id && Boolean(editForm);
-            // const upload = pendingUploads[task.id];
+            const upload = pendingUploads[task.id];
 
             return (
               <Card
                 key={task.id}
-                className={`border-l-4 ${isOpen ? "border-l-primary/80" : ""}`}
+                className={`relative bg-transparent text-black border-l-4 ${isOpen ? "border-l-primary/80" : ""}`}
               >
-                <CardHeader className="gap-2">
+                <div className="absolute inset-0">
+                  {firstImage ? (
+                    <Image
+                      src={firstImage.url}
+                      alt=""
+                      aria-hidden="true"
+                      fill
+                      className="object-cover object-center"
+                    />
+                  ) : null}
+                  <div className="absolute inset-0 bg-background/85" />
+                </div>
+                <CardHeader className="relative gap-2">
                   <div className="flex items-start justify-between gap-3">
                     <div className="space-y-1">
-                      <CardTitle className="text-base sm:text-lg">
+                      <CardTitle className="text-base sm:text-lg font-bold">
                         {task.title}
                       </CardTitle>
-                      <CardDescription>{task.description}</CardDescription>
+                      <CardDescription className="text-black">
+                        {task.description}
+                      </CardDescription>
                     </div>
-                    <div className="flex flex-wrap items-center justify-end gap-1.5">
+                    {/* <div className="flex flex-wrap items-center justify-end gap-1.5">
                       {task.status === "open" ? (
                         <Badge
                           variant={"default"}
@@ -441,11 +453,11 @@ export const TaskCards = ({
                           Versteckt
                         </Badge>
                       ) : null}
-                    </div>
+                    </div> */}
                   </div>
                 </CardHeader>
 
-                <CardContent className="grid gap-3 text-sm">
+                <CardContent className="relative grid gap-3 text-sm">
                   {/* {firstImage ? (
                   <div className="overflow-hidden rounded-lg border bg-muted/10">
                     <img
@@ -457,30 +469,43 @@ export const TaskCards = ({
                 ) : null}*/}
 
                   {task.materials ? (
-                    <p className="flex items-start gap-2 text-muted-foreground">
+                    <p className="flex items-start gap-2 text-black">
                       <Wrench
                         className="size-4 shrink-0 mt-1"
+                        color="#000000"
                         aria-hidden="true"
                       />
                       {task.materials}
                     </p>
                   ) : null}
                   <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4 pb-4">
-                    <p className="flex items-center gap-2 text-muted-foreground">
-                      <CalendarDays className="size-4" aria-hidden="true" />
+                    <p className="flex items-center gap-2 text-black">
+                      <CalendarDays
+                        className="size-4"
+                        color="#000000"
+                        aria-hidden="true"
+                      />
                       {formatDateRange(task)}
                     </p>
                     {task.durationEstimate !== null &&
                       task.durationEstimate !== "" && (
-                        <p className="flex items-center gap-2 text-muted-foreground">
-                          <Clock3 className="size-4" aria-hidden="true" />
+                        <p className="flex items-center gap-2 text-black">
+                          <Clock3
+                            className="size-4"
+                            color="#000000"
+                            aria-hidden="true"
+                          />
                           {task.durationEstimate === "1"
                             ? "1 Stunde"
                             : `${task.durationEstimate} Stunden`}
                         </p>
                       )}
-                    <p className="flex items-center gap-2 text-muted-foreground">
-                      <Users className="size-4" aria-hidden="true" />
+                    <p className="flex items-center gap-2 text-black">
+                      <Users
+                        className="size-4"
+                        color="#000000"
+                        aria-hidden="true"
+                      />
                       {task.participantCount}
                       {task.maxParticipants !== null
                         ? ` von ${task.maxParticipants}`
@@ -493,236 +518,175 @@ export const TaskCards = ({
                   </div>
 
                   {isAdmin ? (
-                    <div className="grid gap-3 rounded-lg border bg-muted/20 p-3">
-                      <div>
-                        <h3 className="mb-2 text-sm font-medium">
-                          Angemeldete Teilnehmer
-                        </h3>
-                        {task.participants && task.participants.length > 0 ? (
-                          <ol className="grid list-decimal gap-1 pl-6 text-sm">
-                            {task.participants.map((participant) => (
-                              <li key={participant.id} className="px-2 py-1">
-                                <div className="flex items-center justify-between gap-2">
-                                  <span>
-                                    {participant.firstName}{" "}
-                                    {participant.lastName}
-                                  </span>
-                                  <AlertDialog>
-                                    <AlertDialogTrigger asChild>
-                                      <Button
-                                        type="button"
-                                        size="icon-xs"
-                                        variant="ghost"
-                                        className="text-destructive hover:text-destructive"
-                                        disabled={
-                                          removingParticipantId ===
-                                          participant.id
-                                        }
-                                        aria-label={`${participant.firstName} ${participant.lastName} abmelden`}
-                                      >
-                                        {removingParticipantId ===
-                                        participant.id ? (
-                                          <Spinner />
-                                        ) : (
-                                          <Trash2
-                                            className="size-3"
-                                            aria-hidden="true"
-                                          />
-                                        )}
-                                      </Button>
-                                    </AlertDialogTrigger>
-                                    <AlertDialogContent>
-                                      <AlertDialogHeader>
-                                        <AlertDialogTitle>
-                                          Teilnehmer abmelden?
-                                        </AlertDialogTitle>
-                                        <AlertDialogDescription>
-                                          {participant.firstName}{" "}
-                                          {participant.lastName}&nbsp;wird von
-                                          &quot;
-                                          {task.title}&quot; abgemeldet. Diese
-                                          Aktion kann nicht rückgängig gemacht
-                                          werden.
-                                        </AlertDialogDescription>
-                                      </AlertDialogHeader>
-                                      <AlertDialogFooter>
-                                        <AlertDialogCancel>
-                                          Abbrechen
-                                        </AlertDialogCancel>
-                                        <AlertDialogAction
-                                          className={buttonVariants({
-                                            variant: "destructive",
-                                          })}
-                                          onClick={() =>
-                                            void handleAdminRemoveParticipant(
-                                              task.id,
-                                              participant,
-                                            )
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {/* Participants box */}
+                      <div className="grid gap-3 rounded-lg border bg-white p-3">
+                        <div>
+                          <div className="mb-2 flex items-center justify-between">
+                            <h3 className="text-sm font-medium">
+                              Angemeldete Teilnehmer
+                            </h3>
+                            <Button
+                              type="button"
+                              size="icon-xs"
+                              variant="ghost"
+                              onClick={() => openHistoryDialog(task.id)}
+                              aria-label="Verlauf anzeigen"
+                            >
+                              <History className="size-3" aria-hidden="true" />
+                            </Button>
+                          </div>
+                          {task.participants && task.participants.length > 0 ? (
+                            <ol className="grid list-decimal gap-1 pl-6 text-sm">
+                              {task.participants.map((participant) => (
+                                <li key={participant.id} className=" py-1">
+                                  <div className="flex items-center justify-between gap-2">
+                                    <span>
+                                      {participant.firstName}{" "}
+                                      {participant.lastName}
+                                    </span>
+                                    <AlertDialog>
+                                      <AlertDialogTrigger asChild>
+                                        <Button
+                                          type="button"
+                                          size="icon-xs"
+                                          variant="ghost"
+                                          className="text-destructive hover:text-destructive"
+                                          disabled={
+                                            removingParticipantId ===
+                                            participant.id
                                           }
+                                          aria-label={`${participant.firstName} ${participant.lastName} abmelden`}
                                         >
-                                          Abmelden
-                                        </AlertDialogAction>
-                                      </AlertDialogFooter>
-                                    </AlertDialogContent>
-                                  </AlertDialog>
-                                </div>
-                              </li>
-                            ))}
-                          </ol>
+                                          {removingParticipantId ===
+                                          participant.id ? (
+                                            <Spinner />
+                                          ) : (
+                                            <Trash2
+                                              className="size-3"
+                                              aria-hidden="true"
+                                            />
+                                          )}
+                                        </Button>
+                                      </AlertDialogTrigger>
+                                      <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                          <AlertDialogTitle>
+                                            Teilnehmer abmelden?
+                                          </AlertDialogTitle>
+                                          <AlertDialogDescription>
+                                            {participant.firstName}{" "}
+                                            {participant.lastName}&nbsp;wird von
+                                            &quot;
+                                            {task.title}&quot; abgemeldet. Diese
+                                            Aktion kann nicht rückgängig gemacht
+                                            werden.
+                                          </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                          <AlertDialogCancel>
+                                            Abbrechen
+                                          </AlertDialogCancel>
+                                          <AlertDialogAction
+                                            className={buttonVariants({
+                                              variant: "destructive",
+                                            })}
+                                            onClick={() =>
+                                              void handleAdminRemoveParticipant(
+                                                task.id,
+                                                participant,
+                                              )
+                                            }
+                                          >
+                                            Abmelden
+                                          </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                      </AlertDialogContent>
+                                    </AlertDialog>
+                                  </div>
+                                </li>
+                              ))}
+                            </ol>
+                          ) : (
+                            <p className="text-sm text-muted-foreground">
+                              Keine Teilnehmer vorhanden.
+                            </p>
+                          )}
+                        </div>
+
+                        <AdminAddParticipantForm
+                          taskId={task.id}
+                          onAdded={async () => {
+                            await onParticipantsChanged?.();
+                            void fetchHistory(task.id);
+                          }}
+                        />
+                      </div>
+
+                      {/* Image box */}
+                      <div className="rounded-lg border bg-white p-3">
+                        <h3 className="mb-2 text-sm font-medium">
+                          Hintergrundbild
+                        </h3>
+                        {firstImage ? (
+                          <div className="relative inline-block overflow-hidden rounded-md border">
+                            <Image
+                              src={firstImage.url}
+                              alt="Hintergrundbild"
+                              width={160}
+                              height={96}
+                              className="h-24 w-auto object-cover"
+                            />
+                            <Button
+                              type="button"
+                              size="icon-xs"
+                              variant="destructive"
+                              className="absolute top-1 right-1 bg-white hover:bg-white/90"
+                              onClick={() =>
+                                onDeleteImage(task.id, firstImage.id)
+                              }
+                              disabled={isBusy}
+                              aria-label="Bild löschen"
+                            >
+                              {isDeletingImage ? (
+                                <Spinner />
+                              ) : (
+                                <Trash2 className="size-3" aria-hidden="true" />
+                              )}
+                            </Button>
+                          </div>
                         ) : (
-                          <p className="text-sm text-muted-foreground">
-                            Keine Teilnehmer vorhanden.
-                          </p>
+                          <div className="grid gap-2">
+                            <Input
+                              type="file"
+                              accept="image/*"
+                              className={baseFieldClass}
+                              onChange={(e) =>
+                                onSelectUpload(task.id, e.currentTarget.files)
+                              }
+                            />
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => onUploadImages(task.id)}
+                              disabled={
+                                isBusy || !upload || upload.files.length === 0
+                              }
+                            >
+                              {isUploading ? (
+                                <Spinner />
+                              ) : (
+                                <ImagePlus
+                                  className="size-4"
+                                  aria-hidden="true"
+                                />
+                              )}
+                              Bild hochladen
+                            </Button>
+                          </div>
                         )}
                       </div>
-
-                      <AdminAddParticipantForm
-                        taskId={task.id}
-                        onAdded={async () => {
-                          await onParticipantsChanged?.();
-                          void fetchHistory(task.id);
-                        }}
-                      />
-
-                      <div className="mt-1 border-t pt-3">
-                        <button
-                          type="button"
-                          onClick={() => toggleHistory(task.id)}
-                          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
-                        >
-                          <History className="size-3" aria-hidden="true" />
-                          {showHistoryForTaskId === task.id
-                            ? "Verlauf ausblenden"
-                            : "Verlauf anzeigen"}
-                        </button>
-
-                        {showHistoryForTaskId === task.id ? (
-                          <div className="mt-2">
-                            {!historyByTaskId[task.id] ? (
-                              <p className="text-xs text-muted-foreground">
-                                Lade Verlauf…
-                              </p>
-                            ) : historyByTaskId[task.id].length === 0 ? (
-                              <p className="text-xs text-muted-foreground">
-                                Kein Verlauf vorhanden.
-                              </p>
-                            ) : (
-                              <ol className="grid gap-1">
-                                {historyByTaskId[task.id].map((entry) => (
-                                  <li
-                                    key={entry.id}
-                                    className="grid grid-cols-[1fr_auto] gap-x-3 gap-y-0.5 rounded px-2 py-1.5 text-xs odd:bg-muted/30"
-                                  >
-                                    <span className="font-medium">
-                                      {entry.firstName} {entry.lastName}
-                                    </span>
-                                    <span className="text-right text-muted-foreground">
-                                      {formatDateTime(entry.createdAt)}
-                                    </span>
-                                    <span
-                                      className={
-                                        entry.action === "registered"
-                                          ? "text-primary"
-                                          : "text-destructive"
-                                      }
-                                    >
-                                      {entry.action === "registered"
-                                        ? "Angemeldet"
-                                        : "Abgemeldet"}
-                                    </span>
-                                    <span className="text-right text-muted-foreground">
-                                      {entry.performedBy === "admin"
-                                        ? "durch Admin"
-                                        : "selbst"}
-                                    </span>
-                                  </li>
-                                ))}
-                              </ol>
-                            )}
-                          </div>
-                        ) : null}
-                      </div>
-
-                      {/* <div>
-                      <h3 className="mb-2 text-sm font-medium">Bilder</h3>
-                      {task.images.length > 0 ? (
-                        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
-                          {task.images.map((image) => (
-                            <div
-                              key={image.id}
-                              className="relative overflow-hidden rounded-md border"
-                            >
-                              <img
-                                src={image.url}
-                                alt="Task Bild"
-                                className="h-24 w-full object-cover"
-                              />
-                              <Button
-                                type="button"
-                                size="icon-xs"
-                                variant="destructive"
-                                className="absolute top-1 right-1"
-                                onClick={() => onDeleteImage(task.id, image.id)}
-                                disabled={isBusy}
-                                aria-label="Bild löschen"
-                              >
-                                <Trash2 className="size-3" aria-hidden="true" />
-                              </Button>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="text-sm text-muted-foreground">
-                          Noch keine Bilder.
-                        </p>
-                      )}
-                    </div>
-
-                    <div className="grid gap-2">
-                      <label className="text-xs text-muted-foreground">
-                        Bilder auswählen (mit Vorschau)
-                      </label>
-                      <Input
-                        type="file"
-                        multiple
-                        accept="image/*"
-                        onChange={(event) =>
-                          onSelectUpload(task.id, event.currentTarget.files)
-                        }
-                      />
-
-                      {upload && upload.previews.length > 0 ? (
-                        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
-                          {upload.previews.map((previewUrl, index) => (
-                            <img
-                              key={`${task.id}-preview-${index}`}
-                              src={previewUrl}
-                              alt="Neue Bildvorschau"
-                              className="h-24 w-full rounded-md border object-cover"
-                            />
-                          ))}
-                        </div>
-                      ) : null}
-
-                      <div>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => onUploadImages(task.id)}
-                          disabled={
-                            isBusy || !upload || upload.files.length === 0
-                          }
-                        >
-                          {isUploading ? (
-                            <Spinner />
-                          ) : (
-                            <ImagePlus className="size-4" aria-hidden="true" />
-                          )}
-                          Bilder hochladen
-                        </Button>
-                      </div>
-                    </div> */}
                     </div>
                   ) : null}
 
@@ -758,7 +722,7 @@ export const TaskCards = ({
                   ) : null}
 
                   {isAdmin && isEditing && editForm ? (
-                    <div className="grid gap-3 rounded-lg border bg-muted/20 p-3">
+                    <div className="grid gap-3 rounded-lg border bg-white p-3">
                       <h3 className="text-sm font-medium">
                         Einsatz bearbeiten
                       </h3>
@@ -778,7 +742,7 @@ export const TaskCards = ({
                 </CardContent>
 
                 {isAdmin ? (
-                  <CardFooter className="flex flex-wrap gap-2 border-t">
+                  <CardFooter className="relative flex flex-wrap gap-2 border-t">
                     {task.startDate ? (
                       <a
                         href={`/api/tasks/${task.id}/ics`}
@@ -1072,6 +1036,74 @@ export const TaskCards = ({
             </DialogContent>
           )
         ) : null}
+      </Dialog>
+
+      <Dialog
+        open={Boolean(historyDialogTaskId)}
+        onOpenChange={(open) => {
+          if (!open) setHistoryDialogTaskId(null);
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Verlauf</DialogTitle>
+            <DialogDescription>
+              An- und Abmeldungen für diesen Einsatz
+            </DialogDescription>
+          </DialogHeader>
+          <div className="max-h-96 overflow-y-auto">
+            {historyDialogTaskId ? (
+              !historyByTaskId[historyDialogTaskId] ? (
+                <p className="text-sm text-muted-foreground">Lade Verlauf…</p>
+              ) : historyByTaskId[historyDialogTaskId].length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  Kein Verlauf vorhanden.
+                </p>
+              ) : (
+                <ol className="grid gap-1">
+                  {historyByTaskId[historyDialogTaskId].map((entry) => (
+                    <li
+                      key={entry.id}
+                      className="grid grid-cols-[1fr_auto] gap-x-3 gap-y-0.5 rounded px-2 py-1.5 text-xs odd:bg-muted/30"
+                    >
+                      <span className="font-medium">
+                        {entry.firstName} {entry.lastName}
+                      </span>
+                      <span className="text-right text-muted-foreground">
+                        {formatDateTime(entry.createdAt)}
+                      </span>
+                      <span
+                        className={
+                          entry.action === "registered"
+                            ? "text-primary"
+                            : "text-destructive"
+                        }
+                      >
+                        {entry.action === "registered"
+                          ? "Angemeldet"
+                          : "Abgemeldet"}
+                      </span>
+                      <span className="text-right text-muted-foreground">
+                        {entry.performedBy === "admin"
+                          ? "durch Admin"
+                          : "selbst"}
+                      </span>
+                    </li>
+                  ))}
+                </ol>
+              )
+            ) : null}
+          </div>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setHistoryDialogTaskId(null)}
+            >
+              Schließen
+            </Button>
+          </DialogFooter>
+        </DialogContent>
       </Dialog>
 
       <Dialog

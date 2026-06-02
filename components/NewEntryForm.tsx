@@ -22,6 +22,8 @@ type TaskFormProps = {
   isPending: boolean;
   onSubmit: (event: React.SubmitEvent<HTMLFormElement>) => void;
   onCancel?: () => void;
+  onImageChange?: (file: File | null) => void;
+  imageFile?: File | null;
 };
 
 export const TaskForm = ({
@@ -31,6 +33,8 @@ export const TaskForm = ({
   isPending,
   onSubmit,
   onCancel,
+  onImageChange,
+  imageFile,
 }: TaskFormProps) => {
   const formContent = (
     <form className="grid gap-3" onSubmit={onSubmit}>
@@ -181,6 +185,25 @@ export const TaskForm = ({
           </label>
         ) : null}
       </div>
+
+      {mode === "create" && onImageChange ? (
+        <label className="grid gap-1 text-xs text-muted-foreground">
+          Hintergrundbild (optional)
+          <Input
+            type="file"
+            accept="image/*"
+            className={baseFieldClass}
+            onChange={(e) =>
+              onImageChange(e.currentTarget.files?.[0] ?? null)
+            }
+          />
+          {imageFile ? (
+            <span className="truncate text-xs text-foreground">
+              {imageFile.name}
+            </span>
+          ) : null}
+        </label>
+      ) : null}
 
       <div className="flex gap-2">
         <Button type="submit" disabled={isPending}>

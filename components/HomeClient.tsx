@@ -48,6 +48,8 @@ export function HomeClient() {
     isLoggingOut,
     createForm,
     setCreateForm,
+    createImageFile,
+    setCreateImageFile,
     isCreatingTask,
     editingTaskId,
     editForm,
@@ -160,6 +162,8 @@ export function HomeClient() {
               setForm={(v) => setCreateForm(v)}
               isPending={isCreatingTask}
               onSubmit={handleCreateTask}
+              imageFile={createImageFile}
+              onImageChange={setCreateImageFile}
             />
 
             {/* UNUSED: <MailingList ... /> was previously rendered here.

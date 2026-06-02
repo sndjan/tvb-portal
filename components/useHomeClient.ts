@@ -36,6 +36,7 @@ export function useHomeClient() {
   const [createForm, setCreateForm] = useState<TaskFormState>(
     getDefaultTaskForm(),
   );
+  const [createImageFile, setCreateImageFile] = useState<File | null>(null);
   const [isCreatingTask, setIsCreatingTask] = useState(false);
 
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
@@ -214,6 +215,16 @@ export function useHomeClient() {
         method: "POST",
         body: JSON.stringify(payload),
       });
+
+      if (createImageFile) {
+        const formData = new FormData();
+        formData.append("file", createImageFile);
+        await requestJson<{ images: ImageRecord[] }>(
+          `/api/tasks/${response.task.id}/images`,
+          { method: "POST", body: formData },
+        );
+        setCreateImageFile(null);
+      }
 
       setCreateForm(getDefaultTaskForm());
 
@@ -590,6 +601,8 @@ export function useHomeClient() {
     isLoggingOut,
     createForm,
     setCreateForm,
+    createImageFile,
+    setCreateImageFile,
     isCreatingTask,
     editingTaskId,
     editForm,
