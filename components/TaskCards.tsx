@@ -508,12 +508,13 @@ export const TaskCards = ({
                       />
                       {task.participantCount}
                       {task.maxParticipants !== null
-                        ? ` von ${task.maxParticipants}`
+                        ? ` von max. ${task.maxParticipants}`
                         : ""}{" "}
-                      Anmeldung
-                      {task.maxParticipants === 1 || task.participantCount === 1
+                      Teilnehmer
+                      {task.maxParticipants !== null &&
+                      task.participantCount > 1
                         ? ""
-                        : "en"}
+                        : "n"}
                     </p>
                   </div>
 
@@ -524,7 +525,7 @@ export const TaskCards = ({
                         <div>
                           <div className="mb-2 flex items-center justify-between">
                             <h3 className="text-sm font-medium">
-                              Angemeldete Teilnehmer
+                              Eingetragene Teilnehmer
                             </h3>
                             <Button
                               type="button"
@@ -556,7 +557,7 @@ export const TaskCards = ({
                                             removingParticipantId ===
                                             participant.id
                                           }
-                                          aria-label={`${participant.firstName} ${participant.lastName} abmelden`}
+                                          aria-label={`${participant.firstName} ${participant.lastName} austragen`}
                                         >
                                           {removingParticipantId ===
                                           participant.id ? (
@@ -572,15 +573,15 @@ export const TaskCards = ({
                                       <AlertDialogContent>
                                         <AlertDialogHeader>
                                           <AlertDialogTitle>
-                                            Teilnehmer abmelden?
+                                            Teilnehmer austragen?
                                           </AlertDialogTitle>
                                           <AlertDialogDescription>
                                             {participant.firstName}{" "}
                                             {participant.lastName}&nbsp;wird von
                                             &quot;
-                                            {task.title}&quot; abgemeldet. Diese
-                                            Aktion kann nicht rückgängig gemacht
-                                            werden.
+                                            {task.title}&quot; ausgetragen.
+                                            Diese Aktion kann nicht rückgängig
+                                            gemacht werden.
                                           </AlertDialogDescription>
                                         </AlertDialogHeader>
                                         <AlertDialogFooter>
@@ -598,7 +599,7 @@ export const TaskCards = ({
                                               )
                                             }
                                           >
-                                            Abmelden
+                                            Austragen
                                           </AlertDialogAction>
                                         </AlertDialogFooter>
                                       </AlertDialogContent>
@@ -701,7 +702,7 @@ export const TaskCards = ({
                       }}
                     >
                       <UserPlus className="size-4" aria-hidden="true" />
-                      An- / Abmelden
+                      Ein- / Austragen
                     </Button>
                   ) : null}
 
@@ -936,10 +937,10 @@ export const TaskCards = ({
           ) : (
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>An- / Abmeldung</DialogTitle>
+                <DialogTitle>Ein- / Austragen</DialogTitle>
                 <DialogDescription>
                   {dialogTask
-                    ? `Gib deinen Namen ein, um dich für "${dialogTask.title}" anzumelden, oder falls bereits angemeldet, abzumelden.`
+                    ? `Gib deinen Namen ein, um dich für "${dialogTask.title}" einzutragen, oder falls bereits eingetragen, auszutragen.`
                     : ""}
                 </DialogDescription>
               </DialogHeader>
@@ -988,7 +989,7 @@ export const TaskCards = ({
                   </p>
                 ) : isRegistered ? (
                   <p className="text-sm text-muted-foreground">
-                    Du bist bereits angemeldet.
+                    Du bist bereits eingetragen.
                   </p>
                 ) : dialogTask.maxParticipants !== null &&
                   dialogTask.participantCount >= dialogTask.maxParticipants ? (
@@ -997,7 +998,7 @@ export const TaskCards = ({
                   </p>
                 ) : (
                   <p className="text-sm text-muted-foreground">
-                    Du bist aktuell nicht angemeldet.
+                    Du bist aktuell nicht eingetragen.
                   </p>
                 )}
               </div>
@@ -1011,7 +1012,7 @@ export const TaskCards = ({
                       disabled={isRegistrationSubmitting}
                     >
                       {isRegistrationSubmitting ? <Spinner /> : null}
-                      Abmelden
+                      Austragen
                     </Button>
                   ) : (
                     <Button
@@ -1028,7 +1029,7 @@ export const TaskCards = ({
                       {isRegistrationSubmitting || isCheckingRegistration ? (
                         <Spinner />
                       ) : null}
-                      {isCheckingRegistration ? "Prüfe..." : "Anmelden"}
+                      {isCheckingRegistration ? "Prüfe..." : "Eintragen"}
                     </Button>
                   )}
                 </>
