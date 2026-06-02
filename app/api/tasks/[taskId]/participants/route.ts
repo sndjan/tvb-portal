@@ -76,6 +76,7 @@ export async function POST(
     const input = parseAddParticipantInput(body);
     const participant = await addTaskParticipant(id, input, {
       bypassLimit: isAdmin,
+      performedBy: isAdmin ? "admin" : "self",
     });
 
     void getTaskById(id, false).then((task) => {
@@ -95,9 +96,12 @@ export async function DELETE(
   try {
     const { taskId } = await context.params;
     const id = requireNonEmptyTaskId(taskId);
+    const isAdmin = isAdminRequest(request);
     const body = await readJsonBody(request);
     const input = parseRemoveParticipantInput(body);
-    await removeTaskParticipant(id, input);
+    await removeTaskParticipant(id, input, {
+      performedBy: isAdmin ? "admin" : "self",
+    });
 
     void getTaskById(id, false).then((task) => {
       if (task) void notifyParticipantUnregistered(task, input);

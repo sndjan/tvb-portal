@@ -10,6 +10,16 @@ export type ParticipantRecord = {
   createdAt: string;
 };
 
+export type ParticipantHistoryRecord = {
+  id: string;
+  taskId: string;
+  firstName: string;
+  lastName: string;
+  action: "registered" | "unregistered";
+  performedBy: "self" | "admin";
+  createdAt: string;
+};
+
 export type ImageRecord = {
   id: string;
   taskId: string;

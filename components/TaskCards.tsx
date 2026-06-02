@@ -6,11 +6,18 @@ import { requestJson } from "@/lib/api";
 import {
   Action,
   BusyTask,
+  ParticipantHistoryRecord,
   PendingUpload,
   TaskFormState,
   TaskWithDetails,
 } from "@/lib/types";
-import { baseFieldClass, cn, formatDateRange, toMessage } from "@/lib/utils";
+import {
+  baseFieldClass,
+  cn,
+  formatDateRange,
+  formatDateTime,
+  toMessage,
+} from "@/lib/utils";
 import {
   CalendarDays,
   CalendarPlus,
@@ -18,6 +25,7 @@ import {
   Clock3,
   Eye,
   EyeOff,
+  History,
   Info,
   ListChecks,
   Mail,
@@ -191,6 +199,33 @@ export const TaskCards = ({
     useState(false);
   const [isRegistered, setIsRegistered] = useState(false);
   const [showRegistrationSuccess, setShowRegistrationSuccess] = useState(false);
+  const [historyByTaskId, setHistoryByTaskId] = useState<
+    Record<string, ParticipantHistoryRecord[]>
+  >({});
+  const [showHistoryForTaskId, setShowHistoryForTaskId] = useState<
+    string | null
+  >(null);
+
+  async function fetchHistory(taskId: string) {
+    try {
+      const data = await requestJson<{ history: ParticipantHistoryRecord[] }>(
+        `/api/tasks/${taskId}/history`,
+        { method: "GET" },
+      );
+      setHistoryByTaskId((prev) => ({ ...prev, [taskId]: data.history }));
+    } catch {
+      // non-critical
+    }
+  }
+
+  function toggleHistory(taskId: string) {
+    if (showHistoryForTaskId === taskId) {
+      setShowHistoryForTaskId(null);
+    } else {
+      setShowHistoryForTaskId(taskId);
+      void fetchHistory(taskId);
+    }
+  }
 
   const dialogTask = useMemo(
     () => tasks.find((task) => task.id === dialogTaskId) ?? null,
@@ -252,6 +287,7 @@ export const TaskCards = ({
       setShowRegistrationSuccess(true);
       toast.success("Erfolgreich angemeldet.");
       await onParticipantsChanged?.();
+      void fetchHistory(taskId);
     } catch (error) {
       toast.error(toMessage(error));
     } finally {
@@ -283,6 +319,7 @@ export const TaskCards = ({
       setShowRegistrationSuccess(false);
       toast.success("Abmeldung erfolgreich.");
       await onParticipantsChanged?.();
+      void fetchHistory(taskId);
     } catch (error) {
       toast.error(toMessage(error));
     } finally {
@@ -307,6 +344,7 @@ export const TaskCards = ({
 
       toast.success("Teilnehmer abgemeldet.");
       await onParticipantsChanged?.();
+      void fetchHistory(taskId);
     } catch (error) {
       toast.error(toMessage(error));
     } finally {
@@ -542,8 +580,68 @@ export const TaskCards = ({
                         taskId={task.id}
                         onAdded={async () => {
                           await onParticipantsChanged?.();
+                          void fetchHistory(task.id);
                         }}
                       />
+
+                      <div className="mt-1 border-t pt-3">
+                        <button
+                          type="button"
+                          onClick={() => toggleHistory(task.id)}
+                          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                          <History className="size-3" aria-hidden="true" />
+                          {showHistoryForTaskId === task.id
+                            ? "Verlauf ausblenden"
+                            : "Verlauf anzeigen"}
+                        </button>
+
+                        {showHistoryForTaskId === task.id ? (
+                          <div className="mt-2">
+                            {!historyByTaskId[task.id] ? (
+                              <p className="text-xs text-muted-foreground">
+                                Lade Verlauf…
+                              </p>
+                            ) : historyByTaskId[task.id].length === 0 ? (
+                              <p className="text-xs text-muted-foreground">
+                                Kein Verlauf vorhanden.
+                              </p>
+                            ) : (
+                              <ol className="grid gap-1">
+                                {historyByTaskId[task.id].map((entry) => (
+                                  <li
+                                    key={entry.id}
+                                    className="grid grid-cols-[1fr_auto] gap-x-3 gap-y-0.5 rounded px-2 py-1.5 text-xs odd:bg-muted/30"
+                                  >
+                                    <span className="font-medium">
+                                      {entry.firstName} {entry.lastName}
+                                    </span>
+                                    <span className="text-right text-muted-foreground">
+                                      {formatDateTime(entry.createdAt)}
+                                    </span>
+                                    <span
+                                      className={
+                                        entry.action === "registered"
+                                          ? "text-primary"
+                                          : "text-destructive"
+                                      }
+                                    >
+                                      {entry.action === "registered"
+                                        ? "Angemeldet"
+                                        : "Abgemeldet"}
+                                    </span>
+                                    <span className="text-right text-muted-foreground">
+                                      {entry.performedBy === "admin"
+                                        ? "durch Admin"
+                                        : "selbst"}
+                                    </span>
+                                  </li>
+                                ))}
+                              </ol>
+                            )}
+                          </div>
+                        ) : null}
+                      </div>
 
                       {/* <div>
                       <h3 className="mb-2 text-sm font-medium">Bilder</h3>

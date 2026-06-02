@@ -36,6 +36,16 @@ export type ParticipantRecord = {
   createdAt: string;
 };
 
+export type ParticipantHistoryRecord = {
+  id: string;
+  taskId: string;
+  firstName: string;
+  lastName: string;
+  action: "registered" | "unregistered";
+  performedBy: "self" | "admin";
+  createdAt: string;
+};
+
 export type ImageRecord = {
   id: string;
   taskId: string;
@@ -91,6 +101,16 @@ type ImageRow = {
   id: string | number;
   task_id: string | number;
   url: string | null;
+  created_at: string | null;
+};
+
+type HistoryRow = {
+  id: string | number;
+  task_id: string | number;
+  first_name: string | null;
+  last_name: string | null;
+  action: string | null;
+  performed_by: string | null;
   created_at: string | null;
 };
 
@@ -566,6 +586,18 @@ function mapParticipantRow(row: ParticipantRow): ParticipantRecord {
     taskId: String(row.task_id),
     firstName: row.first_name?.trim() || "Unbekannt",
     lastName: row.last_name?.trim() || "Unbekannt",
+    createdAt: row.created_at || new Date(0).toISOString(),
+  };
+}
+
+function mapHistoryRow(row: HistoryRow): ParticipantHistoryRecord {
+  return {
+    id: String(row.id),
+    taskId: String(row.task_id),
+    firstName: row.first_name?.trim() || "Unbekannt",
+    lastName: row.last_name?.trim() || "Unbekannt",
+    action: row.action === "unregistered" ? "unregistered" : "registered",
+    performedBy: row.performed_by === "admin" ? "admin" : "self",
     createdAt: row.created_at || new Date(0).toISOString(),
   };
 }
@@ -1057,7 +1089,7 @@ export async function listTaskParticipants(
 export async function addTaskParticipant(
   taskId: string,
   input: AddParticipantInput,
-  options?: { bypassLimit?: boolean },
+  options?: { bypassLimit?: boolean; performedBy?: "self" | "admin" },
 ): Promise<ParticipantRecord> {
   const task = await getTaskById(taskId, false);
 
@@ -1107,12 +1139,27 @@ export async function addTaskParticipant(
     );
   }
 
-  return mapParticipantRow(data as ParticipantRow);
+  const participant = mapParticipantRow(data as ParticipantRow);
+
+  try {
+    await supabase.from("participant_history").insert({
+      task_id: taskId,
+      first_name: participant.firstName,
+      last_name: participant.lastName,
+      action: "registered",
+      performed_by: options?.performedBy ?? "self",
+    });
+  } catch {
+    // non-fatal: registration already succeeded
+  }
+
+  return participant;
 }
 
 export async function removeTaskParticipant(
   taskId: string,
   input: RemoveParticipantInput,
+  options?: { performedBy?: "self" | "admin" },
 ): Promise<void> {
   await ensureTaskExists(taskId);
 
@@ -1140,6 +1187,41 @@ export async function removeTaskParticipant(
   if (!data || data.length === 0) {
     throw new HttpError(404, "Eintrag nicht gefunden", "participant_not_found");
   }
+
+  try {
+    await supabase.from("participant_history").insert({
+      task_id: taskId,
+      first_name: normalizedFirstName,
+      last_name: normalizedLastName,
+      action: "unregistered",
+      performed_by: options?.performedBy ?? "self",
+    });
+  } catch {
+    // non-fatal: unregistration already succeeded
+  }
+}
+
+export async function listTaskParticipantHistory(
+  taskId: string,
+): Promise<ParticipantHistoryRecord[]> {
+  await ensureTaskExists(taskId);
+
+  const supabase = getSupabaseServiceClientOrThrow();
+  const { data, error } = await supabase
+    .from("participant_history")
+    .select("id, task_id, first_name, last_name, action, performed_by, created_at")
+    .eq("task_id", taskId)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    throw new HttpError(
+      500,
+      "Verlauf konnte nicht geladen werden",
+      "history_fetch_failed",
+    );
+  }
+
+  return (data || []).map((row) => mapHistoryRow(row as HistoryRow));
 }
 
 export async function hasTaskParticipant(

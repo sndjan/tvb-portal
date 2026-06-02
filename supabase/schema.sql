@@ -63,6 +63,20 @@ create table if not exists public.images (
   constraint images_url_not_empty check (char_length(trim(url)) > 0)
 );
 
+create table if not exists public.participant_history (
+  id uuid primary key default gen_random_uuid(),
+  task_id uuid not null references public.tasks(id) on delete cascade,
+  first_name text not null,
+  last_name text not null,
+  action text not null,
+  performed_by text not null,
+  created_at timestamptz not null default now(),
+  constraint participant_history_action_valid check (action in ('registered', 'unregistered')),
+  constraint participant_history_performed_by_valid check (performed_by in ('self', 'admin')),
+  constraint participant_history_first_name_not_empty check (char_length(trim(first_name)) > 0),
+  constraint participant_history_last_name_not_empty check (char_length(trim(last_name)) > 0)
+);
+
 create table if not exists public.email_list (
   id uuid primary key default gen_random_uuid(),
   email text not null,
@@ -79,6 +93,7 @@ alter table public.email_list
 
 alter table public.tasks enable row level security;
 alter table public.self_registered_participants enable row level security;
+alter table public.participant_history enable row level security;
 alter table public.images enable row level security;
 alter table public.email_list enable row level security;
 
