@@ -518,7 +518,7 @@ export const TaskCards = ({
                   </div>
 
                   {isAdmin ? (
-                    <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="grid gap-3">
                       {/* Participants box */}
                       <div className="grid gap-3 rounded-lg border bg-white p-3">
                         <div>
@@ -624,7 +624,7 @@ export const TaskCards = ({
                       </div>
 
                       {/* Image box */}
-                      <div className="rounded-lg border bg-white p-3">
+                      {/* <div className="rounded-lg border bg-white p-3">
                         <h3 className="mb-2 text-sm font-medium">
                           Hintergrundbild
                         </h3>
@@ -686,7 +686,7 @@ export const TaskCards = ({
                             </Button>
                           </div>
                         )}
-                      </div>
+                      </div> */}
                     </div>
                   ) : null}
 

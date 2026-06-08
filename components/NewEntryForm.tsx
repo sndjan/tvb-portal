@@ -185,7 +185,7 @@ export const TaskForm = ({
           </label>
         ) : null}
       </div>
-
+      {/* 
       {mode === "create" && onImageChange ? (
         <label className="grid gap-1 text-xs text-muted-foreground">
           Hintergrundbild (optional)
@@ -203,7 +203,7 @@ export const TaskForm = ({
             </span>
           ) : null}
         </label>
-      ) : null}
+      ) : null} */}
 
       <div className="flex gap-2">
         <Button type="submit" disabled={isPending}>

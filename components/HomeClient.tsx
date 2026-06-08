@@ -20,7 +20,7 @@ function EmptyState() {
   return (
     <div className="rounded-xl border border-dashed bg-card px-4 py-10 text-center">
       <p className="text-sm text-muted-foreground">
-        Aktuell keine Arbeitseinsätze
+        Aktuell keine Arbeitseinsätze geplant
       </p>
     </div>
   );

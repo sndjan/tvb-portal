@@ -79,9 +79,11 @@ export async function POST(
       performedBy: isAdmin ? "admin" : "self",
     });
 
-    void getTaskById(id, false).then((task) => {
-      if (task) void notifyParticipantRegistered(task, participant);
-    });
+    if (!isAdmin) {
+      void getTaskById(id, false).then((task) => {
+        if (task) void notifyParticipantRegistered(task, participant);
+      });
+    }
 
     return Response.json({ participant }, { status: 201 });
   } catch (error) {
@@ -103,9 +105,11 @@ export async function DELETE(
       performedBy: isAdmin ? "admin" : "self",
     });
 
-    void getTaskById(id, false).then((task) => {
-      if (task) void notifyParticipantUnregistered(task, input);
-    });
+    if (!isAdmin) {
+      void getTaskById(id, false).then((task) => {
+        if (task) void notifyParticipantUnregistered(task, input);
+      });
+    }
 
     return Response.json({ ok: true });
   } catch (error) {
