@@ -20,7 +20,7 @@ function EmptyState() {
   return (
     <div className="rounded-xl border border-dashed bg-card px-4 py-10 text-center">
       <p className="text-sm text-muted-foreground">
-        Aktuell keine Arbeitseinsätze geplant
+        Aktuell sind keine Arbeitseinsätze geplant
       </p>
     </div>
   );
@@ -113,7 +113,18 @@ export function HomeClient() {
     );
 
   return (
-    <main className="min-h-screen bg-linear-to-b from-background via-background to-muted/40 flex flex-col">
+    <main className="min-h-screen flex flex-col">
+      <div
+        className="fixed inset-0 -z-20 bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: "url('/Bg_image.jpg')" }}
+      />
+      <div
+        className="fixed inset-0 -z-10 pointer-events-none"
+        style={{
+          background:
+            "linear-gradient(to bottom, #f0f1ec 0%, #f0f1ec 45%, rgba(240,241,236,0.75) 65%, rgba(240,241,236,0) 100%)",
+        }}
+      />
       <section className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 pt-4 pb-14 sm:px-6 lg:px-8 flex-1">
         <header className="flex flex-col gap-4 rounded-2xl  p-5 backdrop-blur-sm bg-[#1e581e] ">
           <div className="flex flex-wrap items-center justify-between gap-3">

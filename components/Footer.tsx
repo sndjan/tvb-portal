@@ -1,6 +1,6 @@
 export function Footer() {
   return (
-    <footer className="flex mt-auto py-4 gap-4 justify-center text-xs text-muted-foreground">
+    <footer className="flex mt-auto py-4 gap-4 justify-center text-xs font-bold text-white">
       <a
         href="https://tv-bellenberg.de/kontakt/"
         target="_blank"
