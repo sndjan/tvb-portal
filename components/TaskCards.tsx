@@ -511,10 +511,9 @@ export const TaskCards = ({
                         ? ` von max. ${task.maxParticipants}`
                         : ""}{" "}
                       Teilnehmer
-                      {task.maxParticipants !== null &&
-                      task.participantCount > 1
-                        ? ""
-                        : "n"}
+                      {task.maxParticipants !== null && task.maxParticipants > 1
+                        ? "n"
+                        : ""}
                     </p>
                   </div>
 
